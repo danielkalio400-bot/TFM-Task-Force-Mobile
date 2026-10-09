@@ -1,18 +1,34 @@
 # TFM - Task Force Mobile
 
-Independent Unity 6 mobile game project. BazID will provide identity through an
-approved OIDC/PKCE flow; TFM owns its own progression, servers and game data.
+Independent Unity 6 mobile + Windows PC game project. TFM targets Android, iOS and Windows PC from the shared gameplay core, with platform-specific input, UI, graphics and performance profiles.
+
+BazID will provide identity through an approved OIDC/PKCE flow; TFM owns its own progression, servers and game data.
 
 THIS IS A PROJECT SCAFFOLD, NOT A PLAYABLE GAME.
 
+## Platform targets
+- Android
+- iOS
+- Windows PC
+
+Mobile remains the primary optimization focus, but Windows PC is a committed release target rather than a future possibility.
+
 ## Unity setup
-1. Install Unity Hub and a supported Unity 6 LTS editor with Android Build Support.
-2. In Unity Hub create a **Universal 3D** project at:
+1. Install Unity Hub and a supported Unity 6 LTS editor.
+2. Install the platform modules required for the builds you intend to make: Android Build Support, iOS Build Support on a supported macOS build environment, and Windows Build Support.
+3. In Unity Hub create a **Universal 3D** project at:
    `GameClient/TFM-Unity` (this directory is intentionally NOT pre-created).
-3. After Unity finishes creating the project, run the generated
+4. After Unity finishes creating the project, run the generated
    `Import-TFM-StarterAssets.ps1` to import the TFM code and folder structure.
-4. Open Unity and confirm the imported C# scripts compile.
-5. Design original scenes and implement gameplay; no scenes are shipped here.
+5. Open Unity and confirm the imported C# scripts compile.
+6. Design original scenes and implement gameplay; no scenes are shipped here.
+
+## Shared core / platform layers
+The gameplay, networking, progression, weapons, vehicles, maps, AI and game-service logic should stay shared where practical.
+
+Platform-specific layers handle:
+- Mobile: touch HUD, gyro aiming, mobile graphics tiers, thermal/battery scaling, device-specific frame pacing.
+- Windows PC: keyboard/mouse, controller, PC HUD/input presentation, higher graphics tiers, higher refresh-rate support where stable.
 
 ## Backend starter
 - Requires Node.js 20+.
