@@ -26,3 +26,21 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Repository hygiene: keep backups and generated snapshots out of source control
+backup/
+backups/
+**/backup/
+**/backups/
+tmp/
+temp/
+**/tmp/
+**/temp/
+*.bak
+*.bak-*
+*.old
+*.orig
+*~
+*.zip
+*.7z
+*.rar
