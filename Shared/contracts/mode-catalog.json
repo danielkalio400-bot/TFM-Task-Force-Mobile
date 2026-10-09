@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "status": "planned-not-implemented",
+  "targetOriginalMaps": "30+",
+  "targetModesAndVariants": "25+",
+  "sections": [
+    { "id": "mp", "label": "Multiplayer", "permanent": true, "modes": ["Team Deathmatch", "Frontline", "Domination", "Search & Destroy", "Kill Confirmed", "Hardpoint", "Free-for-All", "Gunfight", "Ranked MP", "League Play"] },
+    { "id": "br", "label": "Battle Royale", "permanent": true, "modes": ["Classic BR (100 players)", "Alcatraz", "Tank Battle", "Training Ground", "Blitz", "Solid Gold", "Prop Hunt", "Rotating Events"] },
+    { "id": "zombies", "label": "Zombies", "permanent": true, "modes": ["Raid Normal", "Raid Hardcore", "Survival", "Cooperative Defense", "Special Events"] },
+    { "id": "dmz", "label": "DMZ: Recon", "permanent": true, "modes": ["Standard Extraction", "Solo Extraction", "Squad Extraction", "PvPvE Missions", "High-Risk Zones", "Contracts", "Special Recon Operations"] }
+  ]
+}
