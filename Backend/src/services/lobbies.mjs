@@ -45,15 +45,33 @@ export class LobbyService {
     if (!playerId || !["android", "ios", "windows"].includes(platform)) {
       return { ok: false, error: "invalid_member" };
     }
+
     if (lobby.members.some(member => member.playerId === playerId)) {
       return { ok: true, lobby: structuredClone(lobby) };
     }
+
     if (lobby.members.length >= lobby.maxPlayers) {
       return { ok: false, error: "lobby_full" };
     }
 
     lobby.members.push({ playerId, platform, ready: false });
     return { ok: true, lobby: structuredClone(lobby) };
+  }
+
+  setReady(lobbyId, playerId, ready) {
+    const lobby = this.#lobbies.get(lobbyId);
+    if (!lobby) return { ok: false, error: "lobby_not_found" };
+
+    const member = lobby.members.find(entry => entry.playerId === playerId);
+    if (!member) return { ok: false, error: "member_not_found" };
+
+    member.ready = Boolean(ready);
+    return { ok: true, lobby: structuredClone(lobby) };
+  }
+
+  allReady(lobbyId) {
+    const lobby = this.#lobbies.get(lobbyId);
+    return Boolean(lobby && lobby.members.length > 0 && lobby.members.every(member => member.ready));
   }
 
   leave(lobbyId, playerId) {

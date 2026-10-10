@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/progression-state.schema.json",
+  "title": "TFM Progression State",
+  "type": "object",
+  "required": ["playerId", "totalExperience", "level", "softCredits"],
+  "properties": {
+    "playerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "totalExperience": { "type": "integer", "minimum": 0 },
+    "level": { "type": "integer", "minimum": 1 },
+    "softCredits": { "type": "integer", "minimum": 0 }
+  }
+}

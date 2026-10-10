@@ -1,7 +1,7 @@
 import { readJson, sendJson } from "../http/json.mjs";
 
 function parseLobbyPath(path) {
-  const match = path.match(/^\/v1\/lobbies\/([^/]+)(?:\/(join|leave))?$/);
+  const match = path.match(/^\/v1\/lobbies\/([^/]+)(?:\/(join|leave|ready))?$/);
   return match ? { lobbyId: decodeURIComponent(match[1]), action: match[2] || "" } : null;
 }
 
@@ -33,6 +33,19 @@ export async function handleLobbies(request, response, path, lobbies) {
       const result = lobbies.join(parsed.lobbyId, await readJson(request));
       sendJson(response, result.ok ? 200 : result.error === "lobby_not_found" ? 404 : 400,
         result.ok ? result.lobby : { error: result.error });
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { error: error?.code || "invalid_request" });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && parsed.action === "ready") {
+    try {
+      const body = await readJson(request);
+      const result = lobbies.setReady(parsed.lobbyId, body?.playerId, body?.ready);
+      sendJson(response, result.ok ? 200 : result.error === "lobby_not_found" ? 404 : 400,
+        result.ok ? { ...result.lobby, allReady: lobbies.allReady(parsed.lobbyId) } : { error: result.error });
       return true;
     } catch (error) {
       sendJson(response, 400, { error: error?.code || "invalid_request" });

@@ -21,6 +21,17 @@ test("lobby owner can create and another player can join", () => {
   assert.equal(joined.lobby.ownerPlayerId, "owner");
 });
 
+test("lobby tracks per-member readiness", () => {
+  const service = new LobbyService();
+  const created = service.create({ ownerPlayerId: "a", platform: "ios", maxPlayers: 2 });
+  service.join(created.lobby.lobbyId, { playerId: "b", platform: "android" });
+
+  assert.equal(service.allReady(created.lobby.lobbyId), false);
+  service.setReady(created.lobby.lobbyId, "a", true);
+  service.setReady(created.lobby.lobbyId, "b", true);
+  assert.equal(service.allReady(created.lobby.lobbyId), true);
+});
+
 test("owner transfer occurs when the owner leaves", () => {
   const service = new LobbyService();
   const created = service.create({ ownerPlayerId: "a", platform: "ios", maxPlayers: 2 });
