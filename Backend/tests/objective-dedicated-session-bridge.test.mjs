@@ -72,6 +72,7 @@ test("server owned lifecycle syncs to existing session persistence with terminal
  });
  assert.equal(replay.ok,true);
  assert.equal(replay.replay,true);
+ assert.equal(replay.sessionSnapshot.sequence,legitimate.sessionSnapshot.sequence);
  const ended=session.closeRound("match-38","close-38");
  assert.equal(ended.snapshot.phase,"cancelled");
  assert.equal(ended.sessionSnapshot.terminal,true);
@@ -122,4 +123,13 @@ test("Unity source has readonly snapshot and no progression mutation",()=>{
  assert.match(src,/state.revision<lastRevision/);
  assert.match(src,/eventSequence<lastEventSequence/);
  assert.doesNotMatch(src,/AwardXp|PlayerPrefs|ApplyDamage/);
+});
+
+test("Unity server snapshot and synchronization DTO share canonical round ID",()=>{
+ const root=new URL("../../GameClient/StarterAssets/Assets/_TFM/",import.meta.url);
+ const read=p=>readFileSync(new URL(p,root),"utf8");
+ const snap=read("Online/Objectives/TFMServerObjectiveSnapshot.cs");
+ const sync=read("Online/Objectives/TFMObjectiveDedicatedSyncState.cs");
+ assert.match(snap,/public string roundId/);
+ assert.match(sync,/state.roundId/);
 });

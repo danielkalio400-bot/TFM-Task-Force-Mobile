@@ -79,8 +79,13 @@ export class ObjectiveDedicatedSessionBridge {
     const apply=(matchId,fn)=>invoke(matchId,(session,adapter)=>{
       const done=fn(adapter,session);
       if(!done.ok)return done;
+      // A replay is already in the canonical scoreboard. Do not write a
+      // duplicate session checkpoint or increment persisted sequence.
+      if(done.replay)return {ok:true,replay:true,
+        snapshot:this.#rounds.snapshot(matchId),
+        sessionSnapshot:this.#persistence.latest(matchId)};
       const saved=persist(matchId,session);
-      return saved.ok?{...saved,replay:Boolean(done.replay)}:saved;
+      return saved.ok?{...saved,replay:false}:saved;
     });
 
     const session=Object.freeze({

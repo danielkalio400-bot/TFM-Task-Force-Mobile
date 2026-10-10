@@ -14,6 +14,7 @@ namespace TFM.Online.Objectives
     [Serializable]
     public sealed class TFMServerObjectiveSnapshot
     {
+        public string roundId = string.Empty;
         public string matchId = string.Empty;
         public string mapId = string.Empty;
         public string phase = "warmup";
