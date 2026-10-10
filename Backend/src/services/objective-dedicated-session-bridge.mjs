@@ -17,6 +17,9 @@ export class ObjectiveDedicatedSessionBridge {
   #authorizeServer;
   #validateCapture;
   #bound=new Map();
+  // One unreconciled score change per match. No later authoritative writes
+  // can occur until its matching session checkpoint has been saved.
+  #pending=new Map();
 
   constructor({rounds,persistence,
     authorizeServer=()=>false,validateCapture=()=>false}={}) {
@@ -79,12 +82,15 @@ export class ObjectiveDedicatedSessionBridge {
       if(!save.ok)return save;
       this.#bound.set(matchId,{roundId:current.roundId,
         lastRevision:current.revision,lastSessionSequence:save.snapshot.sequence});
+      this.#pending.delete(matchId);
       return {ok:true,snapshot:current,sessionSnapshot:save.snapshot};
     };
     // Preflight must run BEFORE mutating the authoritative round.
     // The previous version detected a stale checkpoint only AFTER a capture,
     // allowing scoreboard and session state to diverge.
     const preflight=(matchId,session)=>{
+      if(this.#pending.has(matchId))
+        return invalid("objective_checkpoint_reconciliation_required");
       const prior=this.#bound.get(matchId);
       const current=this.#rounds.snapshot(matchId);
       if(prior){
@@ -103,19 +109,38 @@ export class ObjectiveDedicatedSessionBridge {
     const apply=(matchId,fn)=>invoke(matchId,(session,adapter)=>{
       const ready=preflight(matchId,session);
       if(!ready.ok)return ready;
+      const before=this.#rounds.snapshot(matchId);
       const done=fn(adapter,session);
-      if(!done.ok)return done;
-      // A replay or a no-op server clock tick may not increment the
-      // persisted session sequence. Sync terminal phase on real changes.
-      const prior=this.#bound.get(matchId);
       const current=this.#rounds.snapshot(matchId);
-      if(done.replay || (prior && current &&
+      const changed=!!current && (!before ||
+        current.roundId!==before.roundId || current.revision!==before.revision);
+      if(changed){
+        this.#pending.set(matchId,{
+          roundId:current.roundId,revision:current.revision,
+          expectedSequence:session.sequence,mapId:session.mapId
+        });
+      }
+      // Expiration can mutate the round even when the requested capture
+      // fails. Persist that terminal transition instead of losing it.
+      if(!done.ok){
+        if(!changed)return done;
+        const saved=persist(matchId,session);
+        if(!saved.ok)return {ok:false,
+          error:"objective_checkpoint_reconciliation_required",
+          cause:done.error,persistenceError:saved.error};
+        return {...done,sessionSnapshot:saved.sessionSnapshot};
+      }
+      const prior=this.#bound.get(matchId);
+      if(!changed && (done.replay || (prior && current &&
          prior.roundId===current.roundId &&
-         prior.lastRevision===current.revision))
+         prior.lastRevision===current.revision)))
         return {ok:true,replay:Boolean(done.replay),unchanged:!done.replay,
           snapshot:current,sessionSnapshot:this.#persistence.latest(matchId)};
       const saved=persist(matchId,session);
-      return saved.ok?{...saved,replay:false}:saved;
+      if(!saved.ok)return {ok:false,
+        error:"objective_checkpoint_reconciliation_required",
+        persistenceError:saved.error};
+      return {...saved,replay:false};
     });
 
     const session=Object.freeze({
@@ -151,8 +176,23 @@ export class ObjectiveDedicatedSessionBridge {
         adapter.close(matchId,requestId)),
       advanceClock:matchId=>apply(matchId,adapter=>
         adapter.advanceClock(matchId)),
+      reconcileCheckpoint:matchId=>invoke(matchId,session=>{
+        const pending=this.#pending.get(matchId);
+        if(!pending)return invalid("no_pending_objective_checkpoint");
+        const current=this.#rounds.snapshot(matchId);
+        if(!current || current.roundId!==pending.roundId ||
+           current.revision!==pending.revision ||
+           current.mapId!==pending.mapId ||
+           session.sequence!==pending.expectedSequence)
+          return invalid("objective_checkpoint_reconciliation_conflict");
+        // Only the same host-verified dedicated-server session can retry the
+        // original transition. This does not replay the scoring event.
+        return persist(matchId,session);
+      }),
       readSync:(matchId,{afterSequence=0,limit=50}={})=>invoke(
         matchId,(_session,_adapter)=>{
+          if(this.#pending.has(matchId))
+            return invalid("objective_checkpoint_reconciliation_required");
           const snapshot=this.#rounds.snapshot(matchId);
           const page=this.#rounds.eventPage(matchId,{afterSequence,limit});
           if(!snapshot||!page)return invalid("invalid_objective_sync_cursor");

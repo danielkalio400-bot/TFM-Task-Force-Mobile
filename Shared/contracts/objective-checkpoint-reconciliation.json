@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "bulk": 44,
+  "scope": "in-process one-pending-transition retry of dedicated match checkpoints",
+  "states": [
+    "synced",
+    "reconciliation-required"
+  ],
+  "pending": {
+    "perMatch": 1,
+    "records": [
+      "roundId",
+      "revision",
+      "expectedSessionSequence",
+      "mapId"
+    ],
+    "blocks": [
+      "begin",
+      "capture",
+      "close",
+      "tick",
+      "readSync",
+      "open"
+    ],
+    "recovery": "verified original server session may retry exactly the missing checkpoint without re-applying points"
+  },
+  "terminalExpiry": "even failed late captures synchronize server-owned timeout transitions",
+  "failurePolicy": "deny new mutations and client readSync until pending checkpoint saved",
+  "limitations": [
+    "volatile in-process pending ledger",
+    "not crash durable",
+    "no cross-host recovery",
+    "no atomic outbox transaction",
+    "Unity builds and device tests not performed"
+  ]
+}
