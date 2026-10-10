@@ -18,6 +18,7 @@ namespace TFM.Gameplay.Combat
         private int _health;
         private bool _alive;
         private bool _usesImportedTarget;
+        private GameObject _productionVisual;
 
         public int Health => _health;
         public bool IsAlive => _alive;
@@ -36,7 +37,9 @@ namespace TFM.Gameplay.Combat
                 .Where(collider => collider != null && collider.enabled &&
                     collider.gameObject.activeInHierarchy && !collider.isTrigger)
                 .ToArray();
-            _usesImportedTarget = transform.Find("TFM Production Practice Target") != null;
+            Transform installed = transform.Find("TFM Production Practice Target");
+            _productionVisual = installed != null ? installed.gameObject : null;
+            _usesImportedTarget = _productionVisual != null;
             _propertyBlock = new MaterialPropertyBlock();
             ResetTarget();
         }
@@ -100,6 +103,18 @@ namespace TFM.Gameplay.Combat
 
         private void SetTargetVisible(bool visible)
         {
+            if (_productionVisual != null)
+            {
+                // A production target is an authored prefab hierarchy. Toggle the
+                // entire visual object so LODGroups, nested MeshRenderers, skinned
+                // meshes, animators and collider variants all disappear together.
+                // Do not disable this TFMTargetDummy anchor or its respawn coroutine.
+                // Legacy blockout Body/Head objects stay disabled independently.
+                if (_productionVisual.activeSelf != visible)
+                    _productionVisual.SetActive(visible);
+                return;
+            }
+
             foreach (Renderer targetRenderer in _renderers)
             {
                 if (targetRenderer != null) targetRenderer.enabled = visible;
