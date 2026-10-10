@@ -1,7 +1,19 @@
 #requires -Version 5.1
 [CmdletBinding()]
-param([string] $Root = $PSScriptRoot, [switch] $Preview)
+param([string] $Root, [switch] $Preview)
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    $Root = $PSScriptRoot
+}
+if ([string]::IsNullOrWhiteSpace($Root) -and -not [string]::IsNullOrWhiteSpace($MyInvocation.MyCommand.Path)) {
+    $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    throw 'Could not determine the TFM repository root. Pass it explicitly with -Root.'
+}
+$Root = [System.IO.Path]::GetFullPath($Root)
+
 $source = Join-Path $Root 'GameClient\StarterAssets\Assets\_TFM'
 $unityAssets = Join-Path $Root 'GameClient\TFM-Unity\Assets'
 $target = Join-Path $unityAssets '_TFM'

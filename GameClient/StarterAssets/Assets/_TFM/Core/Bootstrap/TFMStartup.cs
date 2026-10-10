@@ -1,13 +1,20 @@
+using TFM.Gameplay.Prototype;
 using UnityEngine;
 
 namespace TFM.Core
 {
-    // Minimal startup marker; this does not make a playable game.
-    public class TFMStartup : MonoBehaviour
+    public static class TFMStartup
     {
-        private void Start()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void StartPrototype()
         {
-            Debug.Log("TFM scaffold loaded. Gameplay systems not yet implemented.");
+            if (Object.FindFirstObjectByType<TFMPrototypeBootstrap>() != null)
+            {
+                return;
+            }
+
+            GameObject bootstrap = new GameObject("TFM Prototype Bootstrap");
+            bootstrap.AddComponent<TFMPrototypeBootstrap>();
         }
     }
 }

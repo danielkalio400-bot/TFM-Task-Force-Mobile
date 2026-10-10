@@ -4,7 +4,8 @@ Independent Unity 6 mobile + Windows PC game project. TFM targets Android, iOS a
 
 BazID will provide identity through an approved OIDC/PKCE flow; TFM owns its own progression, servers and game data.
 
-THIS IS A PROJECT SCAFFOLD, NOT A PLAYABLE GAME.
+The repository includes C# source for a local 3D training-yard prototype.
+Authentication and multiplayer are not implemented yet.
 
 ## Platform targets
 - Android
@@ -20,8 +21,11 @@ Mobile remains the primary optimization focus, but Windows PC is a committed rel
    `GameClient/TFM-Unity` (this directory is intentionally NOT pre-created).
 4. After Unity finishes creating the project, run the generated
    `Import-TFM-StarterAssets.ps1` to import the TFM code and folder structure.
-5. Open Unity and confirm the imported C# scripts compile.
-6. Design original scenes and implement gameplay; no scenes are shipped here.
+5. Open the default Unity scene and press Play. The starter code builds the
+   training yard and third-person player at runtime.
+6. Use WASD to move, Left Shift to sprint, Space to jump and hold the right
+   mouse button to orbit the camera. Use the left mouse button to fire and R to
+   reload. Touch movement, aiming, firing, jumping and reload are enabled on mobile.
 
 ## Shared core / platform layers
 The gameplay, networking, progression, weapons, vehicles, maps, AI and game-service logic should stay shared where practical.

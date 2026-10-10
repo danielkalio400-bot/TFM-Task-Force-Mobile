@@ -18,5 +18,25 @@ creating those files with versions that match the installed editor.
 Then run ../Import-TFM-StarterAssets.ps1 from the TFM repository root to copy
 StarterAssets into TFM-Unity/Assets/_TFM. Existing assets are never overwritten.
 
-The C# examples provide a menu/mode data model and a basic startup marker;
-they do not implement gameplay, authentication or multiplayer.
+Open the default scene and press Play. The C# bootstrap creates an original 3D
+training yard, a controllable third-person player, collision, an orbit camera
+and a lightweight HUD at runtime.
+
+Editor controls:
+- WASD or arrow keys: move
+- Left Shift: sprint
+- Space: jump
+- Hold the right mouse button: look
+- Hold the left mouse button: fire
+- R: reload
+
+Mobile controls:
+- Drag on the left half of the screen: move
+- Drag on the right half of the screen: look
+- Tap JUMP: jump
+- Hold FIRE: fire
+- Tap RELOAD: reload
+
+This is the first local gameplay prototype. It includes target-range combat,
+but authentication, networking, progression, final art and multiplayer remain
+separate milestones.

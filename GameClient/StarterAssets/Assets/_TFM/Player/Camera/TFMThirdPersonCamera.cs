@@ -1,0 +1,82 @@
+using TFM.Player.Controls;
+using UnityEngine;
+
+namespace TFM.Player.Camera
+{
+    [DefaultExecutionOrder(100)]
+    public sealed class TFMThirdPersonCamera : MonoBehaviour
+    {
+        [SerializeField, Min(0.1f)] private float distance = 5.5f;
+        [SerializeField, Min(0f)] private float targetHeight = 1.4f;
+        [SerializeField, Min(0f)] private float lookSensitivity = 0.12f;
+        [SerializeField, Min(0f)] private float positionSmoothTime = 0.04f;
+        [SerializeField] private Vector2 pitchLimits = new Vector2(-20f, 65f);
+        [SerializeField] private LayerMask collisionMask = ~(1 << 2);
+
+        private Transform _target;
+        private TFMPlayerInput _input;
+        private Vector3 _positionVelocity;
+        private float _yaw;
+        private float _pitch = 18f;
+        private bool _snapNextFrame = true;
+
+        public void Configure(Transform target, TFMPlayerInput input)
+        {
+            _target = target;
+            _input = input;
+            _yaw = target.eulerAngles.y;
+            _snapNextFrame = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (_target == null)
+            {
+                return;
+            }
+
+            if (_input != null)
+            {
+                _yaw += _input.Look.x * lookSensitivity;
+                _pitch = Mathf.Clamp(
+                    _pitch - _input.Look.y * lookSensitivity,
+                    pitchLimits.x,
+                    pitchLimits.y);
+            }
+
+            Vector3 pivot = _target.position + Vector3.up * targetHeight;
+            Quaternion orbit = Quaternion.Euler(_pitch, _yaw, 0f);
+            Vector3 direction = orbit * Vector3.back;
+            float safeDistance = distance;
+
+            if (Physics.SphereCast(
+                    pivot,
+                    0.2f,
+                    direction,
+                    out RaycastHit hit,
+                    distance,
+                    collisionMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                safeDistance = Mathf.Max(0.35f, hit.distance - 0.15f);
+            }
+
+            Vector3 desiredPosition = pivot + direction * safeDistance;
+            if (_snapNextFrame)
+            {
+                transform.position = desiredPosition;
+                _snapNextFrame = false;
+            }
+            else
+            {
+                transform.position = Vector3.SmoothDamp(
+                    transform.position,
+                    desiredPosition,
+                    ref _positionVelocity,
+                    positionSmoothTime);
+            }
+
+            transform.rotation = Quaternion.LookRotation(pivot - transform.position, Vector3.up);
+        }
+    }
+}

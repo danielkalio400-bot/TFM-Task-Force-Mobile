@@ -12,3 +12,8 @@
 9. Content rollout toward 25+ modes/variants and 30+ original maps.
 
 Each phase requires testing. Release gates are not bypassed automatically.
+
+Current implementation: phase 1 has started with a runtime-generated 3D
+training yard, third-person movement, camera collision, target-range combat and
+mobile touch input. It still needs an Editor playtest, saved Unity scene, menu
+and original art pass.
