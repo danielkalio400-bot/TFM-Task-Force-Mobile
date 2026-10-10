@@ -25,6 +25,21 @@ regression; they are not a Unity 6000.6.5f1 import, render or Play Mode test.
 The cloud environment has no Unity Editor/license. Run the Unity checks above
 on the local installation before treating the demo as build-verified.
 
+### Untitled-scene regression (requires Unity)
+
+Use a disposable Universal 3D project for each first-import case:
+
+1. Leave a clean, untitled scene open, then import the TFM scripts. Confirm the
+   training yard is generated and opens without an additive-scene exception.
+2. In a fresh project, add a cube to an untitled scene before importing. Confirm
+   that scene remains open with its cube, is saved under
+   `Assets/_TFM/Scenes/Recovered`, and the training scene is generated separately.
+3. With a training scene already generated, create another untitled scene and
+   use **TFM > Validate Training Scene**. Confirm validation succeeds, the current
+   scene remains open, and the new recovery file does not overwrite the first.
+4. Reopen each recovery scene and check its objects. Repeat validation with a
+   modified, named scene and confirm its changes are neither saved nor discarded.
+
 ## Remaining platform verification
 
 - Unity compile/playmode tests after creating the Universal 3D project.

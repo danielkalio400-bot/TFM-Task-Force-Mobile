@@ -32,6 +32,9 @@ It can locate and reopen the project's Unity version in the standard Hub locatio
 On first import, the Editor creates `Assets/_TFM/Scenes/TFMTrainingYard.unity`
 and persistent materials. It opens the yard automatically if the current scene
 is an unmodified default scene. Otherwise use **TFM > Open Training Yard**.
+If an untitled scene is open, the builder first saves it to a unique file under
+`Assets/_TFM/Scenes/Recovered`. Its objects are preserved; this lets Unity create
+the training scene additively without the "untitled scene unsaved" exception.
 The level geometry, player, camera, light and three targets are visible before
 Play. Press Play for movement, shooting and the HUD.
 

@@ -78,6 +78,7 @@ namespace TFM.Editor
         public static void EnsureScene()
         {
             if (File.Exists(ScenePath)) return; // Keep local level edits.
+            PreserveUntitledScenes();
             Directory.CreateDirectory("Assets/_TFM/Scenes");
             Directory.CreateDirectory("Assets/_TFM/Materials/Training");
             AssetDatabase.Refresh();
@@ -121,13 +122,38 @@ namespace TFM.Editor
             finally { EditorSceneManager.CloseScene(reloaded, true); }
         }
 
+        private static void PreserveUntitledScenes()
+        {
+            // Unity rejects additive scene creation while an untitled scene is open,
+            // even when it is clean. Give it a unique saved path without closing it
+            // or discarding its objects. Existing named scenes are left untouched.
+            const string recoveryFolder = "Assets/_TFM/Scenes/Recovered";
+            for (int index = 0; index < SceneManager.sceneCount; index++)
+            {
+                Scene scene = SceneManager.GetSceneAt(index);
+                if (!scene.isLoaded || !string.IsNullOrEmpty(scene.path)) continue;
+
+                Directory.CreateDirectory(recoveryFolder);
+                AssetDatabase.Refresh();
+                string path = AssetDatabase.GenerateUniqueAssetPath(recoveryFolder + "/Untitled.unity");
+                if (!EditorSceneManager.SaveScene(scene, path))
+                    throw new InvalidOperationException(
+                        "TFM could not preserve the untitled scene. Save it with File > Save As, then use TFM > Open Training Yard.");
+                Debug.Log("TFM preserved your untitled scene at " + path);
+            }
+        }
+
         [MenuItem("TFM/Validate Training Scene")]
         public static void ValidateTrainingScene()
         {
             EnsureScene();
             Scene loaded = SceneManager.GetSceneByPath(ScenePath);
             bool opened = !loaded.isLoaded;
-            if (opened) loaded = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+            if (opened)
+            {
+                PreserveUntitledScenes();
+                loaded = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+            }
             try
             {
                 ValidateLoadedScene(loaded);
