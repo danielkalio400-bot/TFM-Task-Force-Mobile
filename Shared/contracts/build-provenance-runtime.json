@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "platforms": ["android", "ios", "windows"],
+  "systems": [
+    "source-commit-provenance",
+    "unity-version-record",
+    "artifact-integrity-reference",
+    "signing-identity-reference",
+    "content-manifest-reference",
+    "artifact-verification",
+    "release-candidate-promotion",
+    "artifact-revocation",
+    "build-audit-history"
+  ],
+  "requiredFields": [
+    "sourceCommit",
+    "unityVersion",
+    "artifactIntegrityReference",
+    "signingIdentityReference",
+    "contentManifestReference"
+  ],
+  "rule": "Every release artifact must be traceable to source, engine version, content manifest, integrity evidence and a non-secret signing identity reference before it can become a release candidate.",
+  "productionBoundary": "This starter records provenance references only. It does not sign binaries, store private signing keys, prove reproducible builds, perform notarization, or replace platform-native signing and store validation."
+}

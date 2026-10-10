@@ -121,6 +121,9 @@ import { PlatformComplianceService } from "./services/platform-compliance.mjs";
 import { handleProductGovernance } from "./routes/product-governance.mjs";
 import { productGovernanceRuntime } from "./product-governance-contracts.mjs";
 import { ProductGovernanceService } from "./services/product-governance.mjs";
+import { handleBuildProvenance } from "./routes/build-provenance.mjs";
+import { buildProvenanceRuntime } from "./build-provenance-contracts.mjs";
+import { BuildProvenanceService } from "./services/build-provenance.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -217,6 +220,7 @@ export function makeServer() {
   const patchRelease = new PatchReleaseService(patchReleaseRuntime);
   const platformCompliance = new PlatformComplianceService(platformComplianceRuntime);
   const productGovernance = new ProductGovernanceService(productGovernanceRuntime);
+  const buildProvenance = new BuildProvenanceService(buildProvenanceRuntime);
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -327,6 +331,7 @@ export function makeServer() {
         patchRelease: "local-staged-release-metadata-prototype",
         platformCompliance: "local-internal-certification-gate-prototype",
         productGovernance: "local-risk-and-maturity-gate-prototype",
+        buildProvenance: "local-artifact-traceability-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -472,6 +477,10 @@ export function makeServer() {
     if (await handleProductGovernance(request, response, path, {
       governance: productGovernance,
       contract: productGovernanceRuntime,
+    })) return;
+    if (await handleBuildProvenance(request, response, path, {
+      builds: buildProvenance,
+      contract: buildProvenanceRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
