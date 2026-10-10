@@ -6,6 +6,9 @@ on:
       - "Backend/**"
       - "Shared/contracts/**"
       - "GameClient/StarterAssets/Assets/_TFM/Performance/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Training/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Combat/TFMHitscanWeapon.cs"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Combat/TFMTargetDummy.cs"
       - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Prototype/TFMPrototypeBootstrap.cs"
       - ".github/workflows/backend-ci.yml"
   pull_request:
@@ -13,6 +16,9 @@ on:
       - "Backend/**"
       - "Shared/contracts/**"
       - "GameClient/StarterAssets/Assets/_TFM/Performance/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Training/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Combat/TFMHitscanWeapon.cs"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Combat/TFMTargetDummy.cs"
       - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Prototype/TFMPrototypeBootstrap.cs"
       - ".github/workflows/backend-ci.yml"
 

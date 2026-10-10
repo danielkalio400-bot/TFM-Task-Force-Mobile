@@ -28,6 +28,15 @@ namespace TFM.Gameplay.Combat
             ResetTarget();
         }
 
+        // Clears any prior respawn/flash coroutine when starting a new drill.
+        // Never called from competitive authoritative gameplay.
+        public void ResetForTrial()
+        {
+            StopAllCoroutines();
+            _flashRoutine = null;
+            ResetTarget();
+        }
+
         public bool TakeDamage(int amount)
         {
             if (!_alive || amount <= 0)

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "bulk": 31,
+  "originalContent": true,
+  "status": "offline-local-prototype",
+  "platforms": [
+    "Android",
+    "iOS",
+    "Windows"
+  ],
+  "trial": {
+    "durationSeconds": 75,
+    "objective": "clear each practice target once",
+    "targets": 3,
+    "score": "100 per cleared target + up to 200 accuracy points + 3 per remaining second on success",
+    "states": [
+      "Ready",
+      "Running",
+      "Completed",
+      "Expired",
+      "Cancelled"
+    ],
+    "replay": "manual Start / retry; resets target and ammunition"
+  },
+  "input": [
+    "touch-move-look-and-actions",
+    "keyboard-mouse",
+    "controller"
+  ],
+  "integrity": {
+    "authoritative": false,
+    "networkSynced": false,
+    "ranked": false,
+    "grantsProgression": false,
+    "serverLeaderboard": false,
+    "localBestOnly": true
+  },
+  "source": "TFM master blueprint gameplay client, prototype map and input requirements",
+  "qa": [
+    "Unity 6/URP compilation",
+    "training scene validation",
+    "Android touch and safe-area layout",
+    "iOS on-device validation",
+    "Windows keyboard/mouse and controller",
+    "FPS and thermal measurement"
+  ]
+}

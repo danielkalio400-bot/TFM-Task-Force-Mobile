@@ -5,6 +5,7 @@ using TFM.Player.Controls;
 using TFM.Player.Movement;
 using TFM.UI.HUD;
 using TFM.Performance;
+using TFM.Gameplay.Training;
 using UnityEngine;
 
 namespace TFM.Gameplay.Prototype
@@ -35,6 +36,17 @@ namespace TFM.Gameplay.Prototype
                     gameObject.AddComponent<TFMAdaptiveFramePacer>();
                 if (GetComponent<TFMPerformancePanel>() == null)
                     gameObject.AddComponent<TFMPerformancePanel>();
+
+                // Existing saved yards are extended at runtime in place.
+                // Nothing regenerates or overwrites locally edited Unity scenes.
+                TFMTrainingTrial trial = GetComponent<TFMTrainingTrial>();
+                if (trial == null) trial = gameObject.AddComponent<TFMTrainingTrial>();
+                trial.Configure(GetComponentInChildren<TFMHitscanWeapon>(),
+                    GetComponentsInChildren<TFMTargetDummy>(true));
+                TFMTrainingTrialHud trialHud = GetComponent<TFMTrainingTrialHud>();
+                if (trialHud == null)
+                    trialHud = gameObject.AddComponent<TFMTrainingTrialHud>();
+                trialHud.Configure(trial);
             }
         }
 
