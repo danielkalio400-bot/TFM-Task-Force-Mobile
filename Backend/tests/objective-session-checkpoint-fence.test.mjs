@@ -60,7 +60,8 @@ test("dedicated bridge uses only fenced checkpoint writes and rejects external s
  assert.equal(store.latest("match42").sequence,2);
  // Independent host reassignment is not a proof of objective authority.
  store.save({...input("s1"),serverId:"s2"});
- assert.equal(session.beginRound("start").ok,false);
+ const rejected=session.beginRound("match42","start");
+ assert.equal(rejected.error,"active_server_assignment_required");
  assert.equal(store.latest("match42").serverId,"s2");
 });
 test("checkpoint policy can be inspected without public checkpoint mutation",async t=>{
