@@ -6,6 +6,7 @@ using TFM.Player.Movement;
 using TFM.UI.HUD;
 using TFM.Performance;
 using TFM.Gameplay.Training;
+using TFM.Gameplay.Practice;
 using UnityEngine;
 
 namespace TFM.Gameplay.Prototype
@@ -47,6 +48,19 @@ namespace TFM.Gameplay.Prototype
                 if (trialHud == null)
                     trialHud = gameObject.AddComponent<TFMTrainingTrialHud>();
                 trialHud.Configure(trial);
+
+                TFMObjectiveRound course = GetComponent<TFMObjectiveRound>();
+                if (course == null) course = gameObject.AddComponent<TFMObjectiveRound>();
+                TFMObjectiveWaypoint[] markers =
+                    GetComponentsInChildren<TFMObjectiveWaypoint>(true);
+                if (markers.Length == 0)
+                    markers = TFMObjectiveCourseBuilder.Build(transform);
+                TFMThirdPersonMotor motor = GetComponentInChildren<TFMThirdPersonMotor>();
+                course.Configure(motor != null ? motor.transform : null, trial, markers);
+                TFMObjectiveRoundHud courseHud = GetComponent<TFMObjectiveRoundHud>();
+                if (courseHud == null)
+                    courseHud = gameObject.AddComponent<TFMObjectiveRoundHud>();
+                courseHud.Configure(course);
             }
         }
 

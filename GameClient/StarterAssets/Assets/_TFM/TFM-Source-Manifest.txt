@@ -1,5 +1,5 @@
-# Canonical import list for the Unity 6 / URP game client.
-# Each path is relative to Assets/_TFM; no generated Unity metadata.
+# TFM canonical source manifest for the Unity installer.
+# Do not add duplicate or Unity-generated files.
 Authentication/ITFMIdentityFlow.cs
 Authentication/TFMAccountSessionState.cs
 Authentication/TFMAuthenticationState.cs
@@ -73,6 +73,11 @@ Gameplay/Objectives/TFMObjectiveState.cs
 Gameplay/Objectives/TFMObjectiveTracker.cs
 Gameplay/Pings/TFMPingEvent.cs
 Gameplay/Pings/TFMPingType.cs
+Gameplay/Practice/TFMObjectiveCourseBuilder.cs
+Gameplay/Practice/TFMObjectiveRound.cs
+Gameplay/Practice/TFMObjectiveRoundHud.cs
+Gameplay/Practice/TFMObjectiveRoundPhase.cs
+Gameplay/Practice/TFMObjectiveWaypoint.cs
 Gameplay/Progression/TFMMatchRewardBreakdown.cs
 Gameplay/Progression/TFMMatchRewardPolicy.cs
 Gameplay/Progression/TFMProgressionGrantReceipt.cs

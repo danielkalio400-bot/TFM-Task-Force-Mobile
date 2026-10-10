@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TFM.Gameplay.Combat;
+using TFM.Gameplay.Practice;
 using UnityEngine;
 
 namespace TFM.Gameplay.Training
@@ -50,6 +51,9 @@ namespace TFM.Gameplay.Training
         public bool Begin()
         {
             if (_weapon == null || _targets.Count == 0 || _paused) return false;
+            // Offline practice activities cannot award points simultaneously.
+            TFMObjectiveRound route = GetComponent<TFMObjectiveRound>();
+            if (route != null) route.Cancel();
             _elapsed = 0f;
             ShotsFired = ShotsHit = TargetsCleared = Score = 0;
             _remaining.Clear();

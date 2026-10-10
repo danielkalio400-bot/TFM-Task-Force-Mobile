@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "bulk": 32,
+  "mode": "offline-waypoint-practice",
+  "source": "TFM master standalone Unity 6/URP mode foundations",
+  "originalContent": true,
+  "route": {
+    "waypoints": 5,
+    "durationSeconds": 90,
+    "ordered": true,
+    "arrivalRadiusMeters": 2,
+    "scorePerWaypoint": 100,
+    "completionTimeBonusPerSecond": 2
+  },
+  "phases": [
+    "Ready",
+    "Active",
+    "Completed",
+    "Expired",
+    "Cancelled"
+  ],
+  "input": [
+    "touch",
+    "keyboard-mouse",
+    "controller"
+  ],
+  "conditions": [
+    "one waypoint per frame",
+    "no skipped objectives",
+    "time stops while unfocused",
+    "mutually exclusive with existing offline training trial"
+  ],
+  "authority": {
+    "ranked": false,
+    "serverRecorded": false,
+    "offlineOnly": true,
+    "progression": false,
+    "inventory": false,
+    "localBestOnly": true
+  },
+  "qualification": "C# authored only; Unity editor compilation and device QA not performed by Node CI"
+}
