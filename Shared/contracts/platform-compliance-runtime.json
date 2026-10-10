@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "platforms": ["android", "ios", "windows"],
+  "systems": [
+    "compliance-checklist",
+    "privacy-disclosure-gate",
+    "data-safety-gate",
+    "account-deletion-gate",
+    "accessibility-review-gate",
+    "content-rating-questionnaire-gate",
+    "permissions-review-gate",
+    "support-contact-gate",
+    "release-certification-report",
+    "evidence-reference-audit"
+  ],
+  "requiredCategories": [
+    "privacy-disclosure",
+    "data-safety",
+    "account-deletion",
+    "accessibility-review",
+    "content-rating-questionnaire",
+    "permissions-review",
+    "support-contact",
+    "operations-rollback"
+  ],
+  "rule": "A TFM build is only a release candidate when every required compliance and operations check is explicitly passed with an evidence reference.",
+  "productionBoundary": "This is an internal readiness checklist. It does not constitute Google Play, Apple App Store, Microsoft/Windows, ratings-board, legal, privacy, or accessibility certification."
+}

@@ -115,6 +115,9 @@ import { OperationsReliabilityService } from "./services/operations-reliability.
 import { handlePatchRelease } from "./routes/patch-release.mjs";
 import { patchReleaseRuntime } from "./patch-release-contracts.mjs";
 import { PatchReleaseService } from "./services/patch-release.mjs";
+import { handlePlatformCompliance } from "./routes/platform-compliance.mjs";
+import { platformComplianceRuntime } from "./platform-compliance-contracts.mjs";
+import { PlatformComplianceService } from "./services/platform-compliance.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -209,6 +212,7 @@ export function makeServer() {
     contract: operationsReliabilityRuntime,
   });
   const patchRelease = new PatchReleaseService(patchReleaseRuntime);
+  const platformCompliance = new PlatformComplianceService(platformComplianceRuntime);
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -317,6 +321,7 @@ export function makeServer() {
         inventoryAuthorityV2: "local-server-owned-transaction-prototype",
         operationsReliability: "local-health-rollback-load-gate-prototype",
         patchRelease: "local-staged-release-metadata-prototype",
+        platformCompliance: "local-internal-certification-gate-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -454,6 +459,10 @@ export function makeServer() {
     if (await handlePatchRelease(request, response, path, {
       patches: patchRelease,
       contract: patchReleaseRuntime,
+    })) return;
+    if (await handlePlatformCompliance(request, response, path, {
+      compliance: platformCompliance,
+      contract: platformComplianceRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
