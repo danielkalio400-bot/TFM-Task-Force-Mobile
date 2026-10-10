@@ -21,6 +21,7 @@ Core/Configuration/TFMModeCatalog.cs
 Core/Diagnostics/TFMRuntimeDiagnostics.cs
 Core/Events/TFMEventBus.cs
 Core/Services/TFMServiceRegistry.cs
+Editor/TFMPlayableDemoBatchBuild.cs
 Editor/TFMTrainingSceneBuilder.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
