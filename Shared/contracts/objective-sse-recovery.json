@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "bulk": 40,
+  "transport": "Node HTTP Server-Sent Events development integration",
+  "resume": {
+    "queryParameter": "afterSequence",
+    "requestHeader": "Last-Event-ID",
+    "format": "canonical nonnegative safe decimal integer",
+    "conflictPolicy": "reject differing query and header values",
+    "repeatedQuery": "reject"
+  },
+  "connectionLifecycle": {
+    "control": "response close event",
+    "requestClosed": "not considered disconnected",
+    "slowReader": "immediately close on write backpressure, release viewer handle",
+    "bound": "at most one in-process active stream per token"
+  },
+  "unity": {
+    "eventCallbacks": "main-thread marshaled",
+    "staleStreamCallbacks": "ignored via monotonically incrementing local generation",
+    "queuedFramesMax": 256
+  },
+  "defaultTrust": "no production BazID or game server verifier configured",
+  "limitations": [
+    "no mobile builds or tested TLS hosting",
+    "no durable cross-host event replay",
+    "no tested reverse-proxy backpressure",
+    "production stream quotas and telemetry needed"
+  ]
+}

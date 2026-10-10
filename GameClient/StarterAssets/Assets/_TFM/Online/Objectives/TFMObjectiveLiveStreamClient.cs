@@ -27,6 +27,9 @@ namespace TFM.Online.Objectives
             new Queue<TFMObjectiveSseFrameParser.Frame>();
         private readonly object _frameLock = new object();
         private bool _queueOverflow;
+        // Generation invalidates callbacks from DownloadHandlerScript instances
+        // belonging to a previous/disconnected stream.
+        private int _streamEpoch;
         private const int MaxQueuedFrames = 256;
         private UnityWebRequest _request;
         private Coroutine _routine;
@@ -94,7 +97,10 @@ namespace TFM.Online.Objectives
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
             {
                 _request = request;
-                request.downloadHandler = new EventDownload(QueueFrame);
+                int epoch;
+                lock (_frameLock) epoch = _streamEpoch;
+                request.downloadHandler = new EventDownload(
+                    frame => QueueFrame(epoch, frame));
                 request.SetRequestHeader("Accept", "text/event-stream");
                 request.SetRequestHeader("Authorization", "Bearer " + _viewerToken);
                 request.timeout = 75;
@@ -111,10 +117,11 @@ namespace TFM.Online.Objectives
             _routine = null;
         }
 
-        private void QueueFrame(TFMObjectiveSseFrameParser.Frame frame)
+        private void QueueFrame(int epoch, TFMObjectiveSseFrameParser.Frame frame)
         {
             lock (_frameLock)
             {
+                if (epoch != _streamEpoch) return;
                 if (_pendingFrames.Count >= MaxQueuedFrames)
                 {
                     _queueOverflow = true;
@@ -178,6 +185,7 @@ namespace TFM.Online.Objectives
             _viewerToken = null;
             lock (_frameLock)
             {
+                _streamEpoch++;
                 _pendingFrames.Clear();
                 _queueOverflow = false;
             }

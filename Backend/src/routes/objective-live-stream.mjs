@@ -1,5 +1,25 @@
 import { sendJson } from "../http/json.mjs";
 
+export function resolveObjectiveStreamCursor(url, lastEventId) {
+  const values=url.searchParams.getAll("afterSequence");
+  if(values.length>1)return {ok:false,error:"duplicate_objective_cursor"};
+  const supplied=values.length===1?values[0]:lastEventId;
+  if(supplied===undefined || supplied===null || supplied==="")
+    return {ok:true,afterSequence:0};
+  // SSE Last-Event-ID and query cursor are decimal sequence numbers,
+  // never floats, exponent notation, signs or oversized integers.
+  if(typeof supplied!=="string" || !/^(0|[1-9][0-9]*)$/.test(supplied))
+    return {ok:false,error:"invalid_objective_cursor"};
+  const afterSequence=Number(supplied);
+  if(!Number.isSafeInteger(afterSequence))
+    return {ok:false,error:"invalid_objective_cursor"};
+  if(values.length===1 && lastEventId!==undefined &&
+     lastEventId!==null && lastEventId!=="" &&
+     String(afterSequence)!==lastEventId)
+    return {ok:false,error:"conflicting_objective_cursors"};
+  return {ok:true,afterSequence};
+}
+
 const sse=(type,payload,id)=>"event: "+type+"\n"+
   (id===undefined?"":"id: "+id+"\n")+
   "data: "+JSON.stringify(payload)+"\n\n";
@@ -31,8 +51,13 @@ export async function handleObjectiveLiveStream(req,res,path,
   if(!/^Bearer [A-Za-z0-9_-]{40,128}$/.test(auth)) {
     sendJson(res,401,{error:"bearer_capability_required"});return true;
   }
-  const after=Number(url.searchParams.get("afterSequence")||"0");
-  const opened=gateway.attach({token:auth.slice(7),matchId,afterSequence:after});
+  const cursor=resolveObjectiveStreamCursor(url,req.headers["last-event-id"]);
+  if(!cursor.ok){
+    sendJson(res,400,{error:cursor.error});return true;
+  }
+  const opened=gateway.attach({
+    token:auth.slice(7),matchId,afterSequence:cursor.afterSequence
+  });
   if(!opened.ok) {
     sendJson(res,opened.error==="live_viewer_match_mismatch"?403:401,
       {error:opened.error});
@@ -56,30 +81,44 @@ export async function handleObjectiveLiveStream(req,res,path,
     if(timer)clearInterval(timer);
     opened.handle.release();
   }
-  function finish(){cleanup();res.end();}
-  req.on("close",cleanup);
+  function finish(){cleanup();if(!res.destroyed)res.end();}
+  function writeFrame(value) {
+    if(closed || res.destroyed)return false;
+    try {
+      if(res.write(value))return true;
+    } catch { /* Connection already closing. */ }
+    // Never allow unbounded output buffers for a slow/disconnected viewer.
+    // Client can reconnect with the last acknowledged sequence while the
+    // short-lived stream capability remains valid.
+    cleanup();
+    res.destroy();
+    return false;
+  }
   res.on("close",cleanup);
-  res.write(sse("snapshot",opened.initial,lastSequence));
+  // Incoming HTTP GET requests complete before their SSE response does.
+  // Do NOT treat req.close as a stream-close notification.
+  if(!writeFrame(sse("snapshot",opened.initial,lastSequence)))return true;
   if(opened.initial.terminal && !opened.initial.hasMore){finish();return true;}
 
   timer=setInterval(()=>{
     if(closed)return;
     const update=opened.handle.read(lastSequence);
     if(!update.ok){
-      res.write(sse("access-ended",{reason:update.error}));
-      finish();return;
+      if(writeFrame(sse("access-ended",{reason:update.error})))finish();
+      return;
     }
     const next=update.frame;
     if(next.snapshot.revision!==lastRevision || next.resyncRequired ||
       next.events.length) {
       lastSequence=next.nextSequence;
       lastRevision=next.snapshot.revision;
-      res.write(sse(next.resyncRequired?"resync":"delta",next,lastSequence));
+      if(!writeFrame(sse(next.resyncRequired?"resync":"delta",next,lastSequence)))
+        return;
     }
     if(next.terminal && !next.hasMore){finish();return;}
     if(Date.now()-heartbeatAt>=15000) {
       heartbeatAt=Date.now();
-      res.write(": keepalive\n\n");
+      if(!writeFrame(": keepalive\n\n"))return;
     }
   },pollIntervalMs);
   timer.unref?.();
