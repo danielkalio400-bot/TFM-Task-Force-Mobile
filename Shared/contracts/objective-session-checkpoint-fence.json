@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "bulk": 42,
+  "scope": "in-process dedicated objective session checkpoint fencing",
+  "preconditions": [
+    "saved match exists",
+    "expected session sequence exactly matches current",
+    "dedicated server ID and map ID identical",
+    "saved session not terminal",
+    "new runtime phase valid",
+    "no regression from active to warmup"
+  ],
+  "result": "stale snapshot returns error without overwriting newer session",
+  "mutations": "ObjectiveDedicatedSessionBridge writes only through SessionPersistenceService.saveIfCurrent",
+  "limitations": [
+    "in-memory only; operations are synchronous JS and not transactional across processes",
+    "round and persistence writes are not one database transaction",
+    "dedicated server identity still requires production verifier",
+    "no game physics/device builds"
+  ]
+}

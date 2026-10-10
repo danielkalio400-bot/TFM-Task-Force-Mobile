@@ -66,10 +66,15 @@ export class ObjectiveDedicatedSessionBridge {
          current.revision<prior.lastRevision))
         return invalid("dedicated_match_revision_regression");
       const terminalState=terminal.has(current.phase);
-      const save=this.#persistence.save({
+      if(typeof this.#persistence.saveIfCurrent!=="function")
+        return invalid("fenced_session_store_required");
+      const save=this.#persistence.saveIfCurrent({
         matchId,sectionId:session.sectionId,modeId:session.modeId,
         mapId:session.mapId,region:session.region,serverId,
         runtimePhase:current.phase,terminal:terminalState
+      },{
+        expectedSequence:session.sequence,expectedServerId:serverId,
+        expectedMapId:session.mapId
       });
       if(!save.ok)return save;
       this.#bound.set(matchId,{roundId:current.roundId,
