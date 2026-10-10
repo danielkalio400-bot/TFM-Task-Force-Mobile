@@ -124,6 +124,9 @@ import { ProductGovernanceService } from "./services/product-governance.mjs";
 import { handleBuildProvenance } from "./routes/build-provenance.mjs";
 import { buildProvenanceRuntime } from "./build-provenance-contracts.mjs";
 import { BuildProvenanceService } from "./services/build-provenance.mjs";
+import { handleReleaseObservability } from "./routes/release-observability.mjs";
+import { releaseObservabilityRuntime } from "./release-observability-contracts.mjs";
+import { ReleaseObservabilityService } from "./services/release-observability.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -221,6 +224,7 @@ export function makeServer() {
   const platformCompliance = new PlatformComplianceService(platformComplianceRuntime);
   const productGovernance = new ProductGovernanceService(productGovernanceRuntime);
   const buildProvenance = new BuildProvenanceService(buildProvenanceRuntime);
+  const releaseObservability = new ReleaseObservabilityService(releaseObservabilityRuntime);
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -332,6 +336,7 @@ export function makeServer() {
         platformCompliance: "local-internal-certification-gate-prototype",
         productGovernance: "local-risk-and-maturity-gate-prototype",
         buildProvenance: "local-artifact-traceability-prototype",
+        releaseObservability: "local-release-quality-gate-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -481,6 +486,10 @@ export function makeServer() {
     if (await handleBuildProvenance(request, response, path, {
       builds: buildProvenance,
       contract: buildProvenanceRuntime,
+    })) return;
+    if (await handleReleaseObservability(request, response, path, {
+      quality: releaseObservability,
+      contract: releaseObservabilityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

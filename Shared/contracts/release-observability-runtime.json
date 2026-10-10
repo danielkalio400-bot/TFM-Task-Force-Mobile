@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "platforms": ["android", "ios", "windows"],
+  "systems": ["release-quality-sample-intake","device-cohort-health","crash-and-anr-gates","frame-time-budget-gates","memory-budget-gates","thermal-health-gates","network-stability-gates","battery-drain-gates","baseline-regression-detection","rollout-hold-decision","rollback-review-decision","quality-audit-history"],
+  "minimumSessions": {"android":250,"ios":200,"windows":150},
+  "thresholds": {
+    "android":{"crashFreeSessionRateMin":0.985,"anrRateMax":0.004,"p95FrameMsMax":33.4,"memoryMbP95Max":1700,"thermalSevereRateMax":0.08,"networkDisconnectRateMax":0.035,"batteryDrainPctPerHourMax":22},
+    "ios":{"crashFreeSessionRateMin":0.99,"anrRateMax":0.002,"p95FrameMsMax":33.4,"memoryMbP95Max":1600,"thermalSevereRateMax":0.06,"networkDisconnectRateMax":0.03,"batteryDrainPctPerHourMax":20},
+    "windows":{"crashFreeSessionRateMin":0.992,"anrRateMax":0,"p95FrameMsMax":25,"memoryMbP95Max":3500,"thermalSevereRateMax":0.03,"networkDisconnectRateMax":0.025,"batteryDrainPctPerHourMax":100}
+  },
+  "regressionLimits":{"crashRateRelativeIncreaseMax":0.35,"p95FrameMsRelativeIncreaseMax":0.2,"memoryMbP95RelativeIncreaseMax":0.15,"networkDisconnectRateRelativeIncreaseMax":0.3},
+  "decisionOrder":["continue","hold","rollback-review"],
+  "rule":"A release candidate may continue staged rollout only when a sufficiently large device cohort stays inside platform quality budgets and does not regress materially against its recorded baseline.",
+  "productionBoundary":"This starter stores developer-submitted aggregate samples and computes deterministic release-quality decisions. It does not collect native crash dumps, ANR traces, platform store vitals, device identifiers, production analytics, or automatically roll back a live release."
+}
