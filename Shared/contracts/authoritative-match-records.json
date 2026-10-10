@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "systems": [
+    "trusted-server-result-ingest",
+    "validation-proof-reference",
+    "immutable-result-archive",
+    "sequenced-replay-telemetry",
+    "replay-manifest",
+    "progression-handoff"
+  ],
+  "validationRule": "A result is authoritative only after a trusted game-server identity and externally validated proof are accepted.",
+  "telemetryRule": "Replay telemetry is ordered metadata for match review and replay tooling; it must not contain credentials or private identity-provider data.",
+  "productionBoundary": "This starter stores validation-proof identifiers only. Real signing, key rotation and cryptographic verification require production security infrastructure."
+}

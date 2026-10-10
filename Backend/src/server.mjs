@@ -94,6 +94,11 @@ import { ProgressionAuditService } from "./services/progression-audit.mjs";
 import { ProgressionUnlockService } from "./services/progression-unlocks.mjs";
 import { ProgressionLeaderboardService } from "./services/progression-leaderboard.mjs";
 import { ProgressionAuthorityService } from "./services/progression-authority.mjs";
+import { handleAuthoritativeResults } from "./routes/authoritative-results.mjs";
+import { authoritativeMatchRecordsRuntime } from "./match-authority-contracts.mjs";
+import { AuthoritativeMatchArchiveService } from "./services/authoritative-match-archive.mjs";
+import { ReplayTelemetryArchiveService } from "./services/replay-telemetry-archive.mjs";
+import { AuthoritativeResultPipelineService } from "./services/authoritative-result-pipeline.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -166,6 +171,13 @@ export function makeServer() {
     unlocks: progressionUnlocks,
     leaderboard: progressionLeaderboard,
     contract: progressionAuthorityRuntime,
+  });
+  const authoritativeMatchArchive = new AuthoritativeMatchArchiveService({ trustedServers: ["local-dev-server"] });
+  const replayTelemetryArchive = new ReplayTelemetryArchiveService();
+  const authoritativeResultPipeline = new AuthoritativeResultPipelineService({
+    archive: authoritativeMatchArchive,
+    replay: replayTelemetryArchive,
+    progression: progressionAuthority,
   });
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
@@ -268,6 +280,8 @@ export function makeServer() {
         progressionAuthority: "local-trusted-source-prototype",
         progressionAudit: "local-audit-history-prototype",
         progressionLeaderboard: "local-snapshot-prototype",
+        authoritativeMatchArchive: "local-validated-proof-prototype",
+        replayTelemetryArchive: "local-sequenced-metadata-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -377,6 +391,12 @@ export function makeServer() {
       unlocks: progressionUnlocks,
       leaderboard: progressionLeaderboard,
       contract: progressionAuthorityRuntime,
+    })) return;
+    if (await handleAuthoritativeResults(request, response, path, {
+      archive: authoritativeMatchArchive,
+      replay: replayTelemetryArchive,
+      pipeline: authoritativeResultPipeline,
+      contract: authoritativeMatchRecordsRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
