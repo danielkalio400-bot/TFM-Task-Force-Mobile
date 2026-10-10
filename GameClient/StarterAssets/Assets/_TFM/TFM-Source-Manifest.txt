@@ -162,6 +162,8 @@ Online/Matchmaking/TFMMatchmakingState.cs
 Online/Matchmaking/TFMMatchmakingTicketData.cs
 Online/Objectives/TFMObjectiveEventCursor.cs
 Online/Objectives/TFMObjectiveEventPage.cs
+Online/Objectives/TFMObjectiveLiveStreamClient.cs
+Online/Objectives/TFMObjectiveSessionCredentials.cs
 Online/Objectives/TFMObjectiveSnapshotBuffer.cs
 Online/Objectives/TFMObjectiveSseFrameParser.cs
 Online/Objectives/TFMServerObjectiveSnapshot.cs

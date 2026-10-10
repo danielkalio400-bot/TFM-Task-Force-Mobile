@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "bulk": 36,
+  "interface": "authenticated objective live session issuance",
+  "method": "POST",
+  "path": "/v1/dev/objective-session/viewer",
+  "auth": "Authorization: Bearer <externally validated access token>",
+  "body": [
+    "matchId",
+    "playerId",
+    "assignmentId",
+    "joinCredential",
+    "lastRevision"
+  ],
+  "response": [
+    "viewerToken",
+    "reconnectToken",
+    "snapshot",
+    "nextSequence",
+    "expiresInMs"
+  ],
+  "identityRules": [
+    "cryptographic verifier injected out-of-band",
+    "no client-provided verified, principal or signatureValidated accepted",
+    "issuer match",
+    "audience match",
+    "subject equals enrolled player",
+    "unexpired token",
+    "opaque principal only known by ObjectiveIdentityGate"
+  ],
+  "defaultPolicy": "deny all until trusted BazID issuer, JWKS and session validator wired",
+  "transportRules": [
+    "SSE GET uses viewerToken bearer header",
+    "stream endpoint is read-only",
+    "client does not post scores or winner",
+    "access tokens cannot be put in URL",
+    "TLS required outside localhost"
+  ],
+  "stillMissing": [
+    "real BazID issuer/JWKS integration",
+    "game-server trust and physics",
+    "cloud reverse proxy",
+    "Unity device certificates and network QA"
+  ]
+}

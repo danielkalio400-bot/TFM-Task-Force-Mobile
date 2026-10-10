@@ -2,6 +2,10 @@ import { createServer } from "node:http";
 import { ServerObjectiveRoundsService } from "./services/server-objective-rounds.mjs";
 import { ObjectiveReconnectBridge } from "./services/objective-reconnect-bridge.mjs";
 import { ObjectiveLiveGateway } from "./services/objective-live-gateway.mjs";
+import { ObjectiveIdentityGate } from "./services/objective-identity-gate.mjs";
+import { ObjectiveSessionIssuer } from "./services/objective-session-issuer.mjs";
+import { handleObjectiveSessionIssuer } from "./routes/objective-session-issuer.mjs";
+import { objectiveSessionContract } from "./objective-session-contracts.mjs";
 import { handleObjectiveLiveStream } from "./routes/objective-live-stream.mjs";
 import { objectiveLiveContract } from "./objective-live-contracts.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
@@ -262,13 +266,18 @@ export function makeServer() {
     persistence: sessionPersistence,
   });
   const authoritativeRecovery = new AuthoritativeRecoveryService(sessionPersistence);
+  const objectiveIdentityGate = new ObjectiveIdentityGate();
   const objectiveReconnectBridge = new ObjectiveReconnectBridge({
     rounds: serverObjectiveRounds, assignments: assignmentsV2,
-    persistence: sessionPersistence
-    // Deliberately no subject verifier until BazID server auth exists.
+    persistence: sessionPersistence,
+    authorizeSubject: (principal, playerId) =>
+      objectiveIdentityGate.authorize(principal, playerId)
   });
   const objectiveLiveGateway = new ObjectiveLiveGateway({
     bridge: objectiveReconnectBridge, rounds: serverObjectiveRounds
+  });
+  const objectiveSessionIssuer = new ObjectiveSessionIssuer({
+    identity: objectiveIdentityGate, gateway: objectiveLiveGateway
   });
 
   matchResults.trustLocalServer("local-dev-server");
@@ -519,6 +528,9 @@ export function makeServer() {
       return sendJson(response, 200, objectiveReconnectContract);
     if (await handleObjectiveLiveStream(request, response, path, {
       gateway: objectiveLiveGateway, contract: objectiveLiveContract,
+    })) return;
+    if (await handleObjectiveSessionIssuer(request, response, path, {
+      issuer: objectiveSessionIssuer, contract: objectiveSessionContract,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
