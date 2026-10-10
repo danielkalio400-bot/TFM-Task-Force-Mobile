@@ -25,6 +25,8 @@ root. To update an existing project, close Unity and run:
 The updater works with ZIP downloads as well as Git clones. It checks all ten
 required scripts before copying, backs up changed scripts under `backups`,
 preserves `.meta` files and custom scenes, and verifies installed file hashes.
+It downloads scripts directly from `raw.githubusercontent.com`; it does not
+require GitHub's archive host. If any download fails, project files stay untouched.
 It can locate and reopen the project's Unity version in the standard Hub location.
 
 On first import, the Editor creates `Assets/_TFM/Scenes/TFMTrainingYard.unity`

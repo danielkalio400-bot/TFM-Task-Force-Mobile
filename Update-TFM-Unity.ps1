@@ -33,20 +33,29 @@ $required = @(
 
 if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
     $download = Join-Path ([IO.Path]::GetTempPath()) ('tfm-update-' + [guid]::NewGuid().ToString('N'))
-    New-Item -ItemType Directory -Path $download | Out-Null
-    $archive = Join-Path $download 'source.zip'
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/danielkalio400-bot/TFM-Task-Force-Mobile/zip/$Revision" -OutFile $archive
-    $extracted = Join-Path $download 'extracted'
-    Expand-Archive -LiteralPath $archive -DestinationPath $extracted
-    $folders = @(Get-ChildItem -LiteralPath $extracted -Directory)
-    if ($folders.Count -ne 1) { throw 'Unexpected archive layout. No project files changed.' }
-    $SourceRoot = $folders[0].FullName
+    $SourceRoot = $download
+    $stagedSource = Join-Path $SourceRoot 'GameClient/StarterAssets/Assets/_TFM'
+    # Use the same host as the updater itself; GitHub ZIPs redirect to codeload,
+    # which is not resolvable on some user networks. Stage all files before copying.
+    foreach ($relative in $required) {
+        $destination = Join-Path $stagedSource $relative
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        $uri = "https://raw.githubusercontent.com/danielkalio400-bot/TFM-Task-Force-Mobile/$Revision/GameClient/StarterAssets/Assets/_TFM/$relative"
+        Write-Host "Downloading $relative"
+        try {
+            Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $destination -TimeoutSec 60
+        } catch {
+            throw "Could not download $relative from raw.githubusercontent.com. No project files changed. $($_.Exception.Message)"
+        }
+    }
 }
 
 $source = Join-Path $SourceRoot 'GameClient/StarterAssets/Assets/_TFM'
 foreach ($relative in $required) {
-    if (-not (Test-Path -LiteralPath (Join-Path $source $relative) -PathType Leaf)) {
+    $sourceFile = Join-Path $source $relative
+    if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf) -or
+        (Get-Item -LiteralPath $sourceFile).Length -eq 0) {
         throw "Incomplete source download: $relative is missing. No project files changed."
     }
 }
