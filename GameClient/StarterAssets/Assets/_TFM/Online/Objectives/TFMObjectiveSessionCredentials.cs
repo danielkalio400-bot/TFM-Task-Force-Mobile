@@ -9,7 +9,7 @@ namespace TFM.Online.Objectives
     {
         public string viewerToken;
         public string reconnectToken;
-        public string expiresInMs;
+        public long expiresInMs;
         public TFMServerObjectiveSnapshot snapshot;
         public long nextSequence;
         public bool resyncRequired;

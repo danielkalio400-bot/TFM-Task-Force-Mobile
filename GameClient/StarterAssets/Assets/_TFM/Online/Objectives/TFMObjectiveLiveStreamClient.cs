@@ -8,7 +8,7 @@ namespace TFM.Online.Objectives
 {
     /// <summary>
     /// Unity read-only SSE client. Credentials are passed at runtime; nothing
-    /// is saved to PlayerPrefs, source assets or logs. Actual BazID sign-in
+    /// is persisted to a local player settings store, assets or logs. Actual BazID sign-in
     /// and server token issuance are outside this component.
     /// </summary>
     public sealed class TFMObjectiveLiveStreamClient : MonoBehaviour
