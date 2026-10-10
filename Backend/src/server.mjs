@@ -106,6 +106,9 @@ import { MatchmakingAuthorityService } from "./services/matchmaking-authority.mj
 import { handleProfileAuthority } from "./routes/profile-authority.mjs";
 import { playerProfileAuthorityRuntime } from "./profile-authority-contracts.mjs";
 import { PlayerProfileAuthorityService } from "./services/player-profile-authority.mjs";
+import { handleInventoryAuthority } from "./routes/inventory-authority.mjs";
+import { inventoryAuthorityRuntime } from "./inventory-authority-contracts.mjs";
+import { InventoryAuthorityService } from "./services/inventory-authority.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -192,6 +195,7 @@ export function makeServer() {
     contract: matchmakingAuthorityRuntime,
   });
   const playerProfileAuthority = new PlayerProfileAuthorityService();
+  const inventoryAuthority = new InventoryAuthorityService({ ledger: inventory, contract: inventoryAuthorityRuntime });
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -297,6 +301,7 @@ export function makeServer() {
         replayTelemetryArchive: "local-sequenced-metadata-prototype",
         matchmakingAuthority: "local-time-bounded-fair-policy-prototype",
         playerProfileAuthority: "local-stable-id-subject-reference-prototype",
+        inventoryAuthorityV2: "local-server-owned-transaction-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -421,6 +426,11 @@ export function makeServer() {
     if (await handleProfileAuthority(request, response, path, {
       profiles: playerProfileAuthority,
       contract: playerProfileAuthorityRuntime,
+    })) return;
+    if (await handleInventoryAuthority(request, response, path, {
+      authority: inventoryAuthority,
+      sessions,
+      contract: inventoryAuthorityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

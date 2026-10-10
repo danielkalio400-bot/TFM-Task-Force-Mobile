@@ -38,20 +38,11 @@ export async function handleLiveServices(
       return true;
     }
 
-    try {
-      const body = await readJson(request);
-      const result = inventory.apply({
-        ...body,
-        playerId: session.session.playerId,
-        authoritySource: "local-development-api",
-      });
-      sendJson(response, result.ok ? 201 : 400,
-        result.ok ? result : { error: result.error });
-      return true;
-    } catch (error) {
-      sendJson(response, 400, { error: error?.code || "invalid_request" });
-      return true;
-    }
+    sendJson(response, 403, {
+      error: "server_inventory_authority_required",
+      message: "Direct client-authored inventory mutations are disabled."
+    });
+    return true;
   }
 
   if (request.method === "POST" && path === "/v1/dev/match-results") {

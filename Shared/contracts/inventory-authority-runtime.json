@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "systems": [
+    "server-owned-mutation-boundary",
+    "idempotent-transactions",
+    "balance-reads",
+    "transaction-history",
+    "trusted-authority-sources",
+    "negative-balance-prevention",
+    "client-mutation-denial"
+  ],
+  "trustedAuthoritySources": [
+    "validated-match-result",
+    "entitlement-grant",
+    "server-consumption",
+    "admin-recovery",
+    "migration"
+  ],
+  "allowedKinds": ["grant", "consume", "revoke"],
+  "rule": "Inventory state is server-owned. Clients may read authorized inventory state but may not directly author inventory mutations.",
+  "productionBoundary": "This starter is an in-memory authority prototype. Production requires authenticated server identities, durable transactional storage, replay protection across processes and audit retention."
+}
