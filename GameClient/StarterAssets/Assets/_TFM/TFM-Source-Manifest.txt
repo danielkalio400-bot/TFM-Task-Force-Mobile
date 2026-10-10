@@ -160,6 +160,7 @@ Online/Matchmaking/TFMMatchmakingPolicySnapshot.cs
 Online/Matchmaking/TFMMatchmakingSearchTicket.cs
 Online/Matchmaking/TFMMatchmakingState.cs
 Online/Matchmaking/TFMMatchmakingTicketData.cs
+Online/Objectives/TFMObjectiveDedicatedSyncState.cs
 Online/Objectives/TFMObjectiveEventCursor.cs
 Online/Objectives/TFMObjectiveEventPage.cs
 Online/Objectives/TFMObjectiveLiveStreamClient.cs

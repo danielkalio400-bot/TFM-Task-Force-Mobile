@@ -9,6 +9,7 @@ import { objectiveSessionContract } from "./objective-session-contracts.mjs";
 import { handleObjectiveLiveStream } from "./routes/objective-live-stream.mjs";
 import { objectiveLiveContract } from "./objective-live-contracts.mjs";
 import { objectiveReconnectRotationContract } from "./objective-reconnect-rotation-contracts.mjs";
+import { objectiveDedicatedContract } from "./objective-dedicated-contracts.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
 import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
 import { objectiveReconnectContract } from "./objective-reconnect-contracts.mjs";
@@ -521,6 +522,8 @@ export function makeServer() {
       quality: releaseObservability,
       contract: releaseObservabilityRuntime,
     })) return;
+    if(request.method==="GET" && path==="/v1/runtime/objective-dedicated-session-bridge")
+      return sendJson(response,200,objectiveDedicatedContract);
     if (await handleServerObjectiveRounds(request, response, path, {
       rounds: serverObjectiveRounds,
       contract: serverObjectiveRoundsContract,

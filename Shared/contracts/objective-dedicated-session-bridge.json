@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "bulk": 38,
+  "scope": "in-process dedicated server authority and session synchronization",
+  "interfaces": [
+    "createServerSession",
+    "openMatch",
+    "beginRound",
+    "captureObjective",
+    "closeRound",
+    "advanceClock",
+    "readSync"
+  ],
+  "serverIdentity": {
+    "authorization": "injected host-side verified server principal",
+    "default": "deny",
+    "playerJoinCredentialAllowed": false
+  },
+  "captureProof": {
+    "authorization": "injected trusted collision/world-state validator",
+    "default": "deny",
+    "unverifiedClientCaptures": "rejected"
+  },
+  "persistence": {
+    "source": "existing SessionPersistenceService",
+    "ties": [
+      "matchId",
+      "serverId",
+      "mapId",
+      "sectionId",
+      "modeId"
+    ],
+    "terminal": "saved as terminal",
+    "revisions": "cannot regress"
+  },
+  "recovery": {
+    "cursor": "afterSequence",
+    "eventPageMax": 100,
+    "gaps": "full authoritative snapshot with resyncRequired",
+    "progressionGranted": false
+  },
+  "notImplemented": [
+    "real server process certificates",
+    "Unity dedicated-server binary",
+    "real authoritative collision and movement physics",
+    "transactional database/event stream",
+    "cross-instance hot migration",
+    "ranking or rewards from these events"
+  ]
+}
