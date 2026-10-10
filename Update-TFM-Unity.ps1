@@ -6,6 +6,8 @@ param(
     [string] $UnityEditorPath,
     [ValidatePattern('^(main|[a-f0-9]{40})$')][string] $Revision = 'main',
     [string] $SourceRoot,
+    [switch] $DownloadLatest,
+    [switch] $ForceManagedOverwrite,
     [switch] $OpenUnity,
     [switch] $LaunchOnly,
     [switch] $Preview
@@ -15,208 +17,190 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $Root = [IO.Path]::GetFullPath($Root)
 $selectionFile = Join-Path $Root '.tfm-unity-project.json'
+$manifestRelative = 'GameClient/StarterAssets/Assets/_TFM/TFM-Source-Manifest.txt'
+$stage = $null
 
-function Get-ProjectPath([string] $Path) {
-    if (-not [IO.Path]::IsPathRooted($Path)) { $Path = Join-Path $Root $Path }
-    return [IO.Path]::GetFullPath($Path).TrimEnd([char[]]@('/', '\'))
+function Resolve-Project([string] $candidate) {
+    if (-not [IO.Path]::IsPathRooted($candidate)) { $candidate = Join-Path $Root $candidate }
+    return [IO.Path]::GetFullPath($candidate).TrimEnd([char[]]@('/', '\\'))
 }
-
-function Test-UnityProject([string] $Path) {
-    return (Test-Path -LiteralPath (Join-Path $Path 'Assets') -PathType Container) -and
-        (Test-Path -LiteralPath (Join-Path $Path 'Packages/manifest.json') -PathType Leaf) -and
-        (Test-Path -LiteralPath (Join-Path $Path 'ProjectSettings/ProjectVersion.txt') -PathType Leaf)
+function Test-Project([string] $folder) {
+    return (Test-Path -LiteralPath (Join-Path $folder 'Assets') -PathType Container) -and
+           (Test-Path -LiteralPath (Join-Path $folder 'Packages/manifest.json') -PathType Leaf) -and
+           (Test-Path -LiteralPath (Join-Path $folder 'ProjectSettings/ProjectVersion.txt') -PathType Leaf)
 }
-
-function Find-UnityEditor {
-    if (-not [string]::IsNullOrWhiteSpace($UnityEditorPath)) {
-        $editor = [IO.Path]::GetFullPath($UnityEditorPath)
-    } else {
-        $versionText = Get-Content -LiteralPath (Join-Path $project 'ProjectSettings/ProjectVersion.txt') -Raw
-        if ($versionText -notmatch '(?m)^m_EditorVersion:\s*([0-9]+\.[0-9]+\.[0-9]+[a-z][0-9]+)\s*$') {
-            throw 'Could not read the Unity Editor version. Pass -UnityEditorPath with the installed Unity.exe path.'
+function Find-Editor {
+    if ($UnityEditorPath) { $editor = [IO.Path]::GetFullPath($UnityEditorPath) }
+    else {
+        $versionFile = Join-Path $project 'ProjectSettings/ProjectVersion.txt'
+        $value = Get-Content -LiteralPath $versionFile -Raw
+        if ($value -notmatch '(?m)^m_EditorVersion:\\s*([0-9]+\\.[0-9]+\\.[0-9]+[a-z][0-9]+)') {
+            throw 'Unity editor version unknown. Supply -UnityEditorPath.'
         }
-        $version = $Matches[1]
         $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles')
-        if ([string]::IsNullOrWhiteSpace($programFiles)) {
-            throw 'Pass -UnityEditorPath with the installed Unity Editor executable path.'
-        }
-        $editor = Join-Path $programFiles "Unity/Hub/Editor/$version/Editor/Unity.exe"
+        if (-not $programFiles) { throw 'Supply -UnityEditorPath.' }
+        $editor = Join-Path $programFiles "Unity/Hub/Editor/$($Matches[1])/Editor/Unity.exe"
     }
     if (-not (Test-Path -LiteralPath $editor -PathType Leaf)) {
-        throw "Unity Editor not found at $editor. Install this version in Unity Hub or pass -UnityEditorPath."
+        throw "Unity Editor not found: $editor"
     }
     return $editor
 }
-
-function Open-TrainingProject([string] $Editor) {
-    # Specify the project and scene command together so Hub's last-used project
-    # cannot redirect the user to an unpopulated nested project.
-    Start-Process -FilePath $Editor -ArgumentList @(
+function Launch-Project([string] $editor) {
+    Start-Process -FilePath $editor -ArgumentList @(
         '-projectPath', ('"' + $project + '"'),
         '-executeMethod', 'TFM.Editor.TFMTrainingSceneBuilder.OpenTrainingYard'
     ) | Out-Null
-    Write-Host "Opening TFM training yard in: $project"
+    Write-Host "Opening the actual Unity project: $project"
+}
+function Parse-Manifest([string] $path) {
+    $names = @(Get-Content -LiteralPath $path | ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and -not $_.StartsWith('#') })
+    if ($names.Count -eq 0) { throw "Empty source manifest: $path" }
+    $seen = @{}
+    foreach ($name in $names) {
+        if ($name -notmatch '^[a-zA-Z0-9_.\\/-]+\\.cs$' -or
+            $name -match '(^|[\\/])\\.\\.([\\/]|$)' -or $seen.ContainsKey($name)) {
+            throw "Invalid or repeated source path in manifest: $name"
+        }
+        $seen[$name] = $true
+    }
+    return ,$names
 }
 
-if (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
-    $project = Get-ProjectPath $ProjectPath
-} else {
+if ($ProjectPath) { $project = Resolve-Project $ProjectPath }
+else {
     $project = $null
     if (Test-Path -LiteralPath $selectionFile -PathType Leaf) {
-        try { $selection = Get-Content -LiteralPath $selectionFile -Raw | ConvertFrom-Json }
-        catch { throw "Could not read $selectionFile. Pass -ProjectPath to choose the project again. No files changed." }
-        if ($null -ne $selection -and $null -ne $selection.PSObject.Properties['projectPath'] -and
-            -not [string]::IsNullOrWhiteSpace($selection.projectPath)) {
-            $savedProject = Get-ProjectPath $selection.projectPath
-            if (Test-UnityProject $savedProject) { $project = $savedProject }
-        }
+        try {
+            $settings = Get-Content -LiteralPath $selectionFile -Raw | ConvertFrom-Json
+            if ($settings.projectPath -and (Test-Project (Resolve-Project $settings.projectPath))) {
+                $project = Resolve-Project $settings.projectPath
+            }
+        } catch { throw "Unreadable Unity project selection; provide -ProjectPath. $($_.Exception.Message)" }
     }
-    if ($null -eq $project) {
-        $candidates = @(
-            'GameClient/TFM-Unity',
-            'GameClient/TFM-Unity/TFM-Unity',
-            'TFM-Unity',
-            'TFM-Unity/TFM-Unity'
-        ) | ForEach-Object { Get-ProjectPath $_ } | Where-Object { Test-UnityProject $_ }
-        $candidates = @($candidates)
-        if ($candidates.Count -eq 0) {
-            throw 'No Unity project found. Pass -ProjectPath to the folder containing Assets, Packages and ProjectSettings. No files changed.'
+    if (-not $project) {
+        $available = @('GameClient/TFM-Unity','GameClient/TFM-Unity/TFM-Unity',
+            'TFM-Unity','TFM-Unity/TFM-Unity') |
+            ForEach-Object { Resolve-Project $_ } |
+            Where-Object { Test-Project $_ }
+        $available = @($available | Select-Object -Unique)
+        if ($available.Count -ne 1) {
+            throw "Expected one Unity project; found $($available.Count). Specify -ProjectPath."
         }
-        if ($candidates.Count -gt 1) {
-            throw ("Multiple Unity projects found. Choose one with -ProjectPath. No files changed.`n" + ($candidates -join "`n"))
-        }
-        $project = $candidates[0]
+        $project = $available[0]
     }
 }
-if (-not (Test-UnityProject $project)) {
-    throw "Unity project not found at $project. Expected Assets, Packages/manifest.json and ProjectSettings/ProjectVersion.txt. No files changed."
-}
-$assets = Join-Path $project 'Assets'
+if (-not (Test-Project $project)) { throw "Not a Unity project: $project" }
+if ($project -match '[\\/]bazaara-platform[\\/]') { throw 'TFM must not write into Bazaara platform.' }
 Write-Host "Selected Unity project: $project"
 
-$required = @(
-    'Core/Bootstrap/TFMStartup.cs',
-    'Core/Configuration/TFMModeCatalog.cs',
-    'Gameplay/Combat/TFMHitscanWeapon.cs',
-    'Gameplay/Combat/TFMTargetDummy.cs',
-    'Gameplay/Prototype/TFMPrototypeBootstrap.cs',
-    'Player/Camera/TFMThirdPersonCamera.cs',
-    'Player/Controls/TFMPlayerInput.cs',
-    'Player/Movement/TFMThirdPersonMotor.cs',
-    'UI/HUD/TFMPrototypeHud.cs',
-    'Editor/TFMTrainingSceneBuilder.cs'
-)
-
-if ($Preview) {
-    Write-Host 'PREVIEW: No files changed and Unity was not opened.'
-    Write-Host "Would install $($required.Count) C# scripts into $(Join-Path $assets '_TFM') and remember this project for Open-TFM-Unity.ps1."
-    return
-}
-
-$editor = $null
-if ($OpenUnity -or $LaunchOnly) { $editor = Find-UnityEditor }
 if ($LaunchOnly) {
-    foreach ($relative in $required) {
-        if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $assets '_TFM') $relative) -PathType Leaf)) {
-            throw "TFM scripts are missing from $project. Run Update-TFM-Unity.ps1 for this project first."
-        }
-    }
-    Open-TrainingProject $editor
+    $editor = Find-Editor
+    Launch-Project $editor
     return
 }
 
-$tooling = @('Update-TFM-Unity.ps1', 'Open-TFM-Unity.ps1', 'Import-TFM-StarterAssets.ps1', 'TFM-Create-Project.ps1')
-$sourceFiles = @($required | ForEach-Object { 'GameClient/StarterAssets/Assets/_TFM/' + $_ }) + $tooling
-if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
-    $download = Join-Path ([IO.Path]::GetTempPath()) ('tfm-update-' + [guid]::NewGuid().ToString('N'))
-    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-    $SourceRoot = $download
-    # Use the same host as the updater itself; GitHub ZIPs redirect to codeload,
-    # which is not resolvable on some user networks. Stage all files before copying.
-    foreach ($relative in $sourceFiles) {
-        $destination = Join-Path $SourceRoot $relative
-        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
-        $uri = "https://raw.githubusercontent.com/danielkalio400-bot/TFM-Task-Force-Mobile/$Revision/$relative"
-        Write-Host "Downloading $relative"
-        try {
+if ($SourceRoot -and $DownloadLatest) { throw 'Specify either -SourceRoot or -DownloadLatest.' }
+
+try {
+    if ($DownloadLatest -or (-not $SourceRoot -and
+        -not (Test-Path -LiteralPath (Join-Path $Root $manifestRelative) -PathType Leaf))) {
+        $stage = Join-Path ([IO.Path]::GetTempPath()) ('tfm-stage-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $stage -Force | Out-Null
+        $SourceRoot = $stage
+        [Net.ServicePointManager]::SecurityProtocol =
+            [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+        $manifestFile = Join-Path $stage $manifestRelative
+        New-Item -ItemType Directory -Path (Split-Path -Parent $manifestFile) -Force | Out-Null
+        $uri = "https://raw.githubusercontent.com/danielkalio400-bot/TFM-Task-Force-Mobile/$Revision/$manifestRelative"
+        Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $manifestFile -TimeoutSec 60
+        $names = @(Parse-Manifest $manifestFile)
+        foreach ($name in $names) {
+            $relative = 'GameClient/StarterAssets/Assets/_TFM/' + $name
+            $destination = Join-Path $stage $relative
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            $uri = "https://raw.githubusercontent.com/danielkalio400-bot/TFM-Task-Force-Mobile/$Revision/$relative"
             Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $destination -TimeoutSec 60
-        } catch {
-            throw "Could not download $relative from raw.githubusercontent.com. No project files changed. $($_.Exception.Message)"
+        }
+    } else {
+        if (-not $SourceRoot) { $SourceRoot = $Root }
+        $SourceRoot = [IO.Path]::GetFullPath($SourceRoot)
+        $names = @(Parse-Manifest (Join-Path $SourceRoot $manifestRelative))
+    }
+
+    $assetsSource = Join-Path $SourceRoot 'GameClient/StarterAssets/Assets/_TFM'
+    $assetsTarget = Join-Path $project 'Assets/_TFM'
+    $statePath = Join-Path $project 'ProjectSettings/TFMSourceHashes.json'
+
+    $known = @{}
+    if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+        $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+        if ($null -eq $state -or $state.version -ne 1) { throw "Unknown import state: $statePath" }
+        foreach ($property in $state.hashes.PSObject.Properties) {
+            $known[$property.Name] = [string]$property.Value
         }
     }
-}
 
-$source = Join-Path $SourceRoot 'GameClient/StarterAssets/Assets/_TFM'
-foreach ($relative in $sourceFiles) {
-    $sourceFile = Join-Path $SourceRoot $relative
-    if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf) -or
-        (Get-Item -LiteralPath $sourceFile).Length -eq 0) {
-        throw "Incomplete source download: $relative is missing. No project files changed."
-    }
-}
-
-$backup = Join-Path $Root ('backups/unity-update-' + [guid]::NewGuid().ToString('N'))
-$targets = @{
-    'starter' = Join-Path $Root 'GameClient/StarterAssets/Assets/_TFM'
-    'unity' = Join-Path $assets '_TFM'
-}
-
-# Inspect and back up every file that would change before replacing any script.
-$changes = @()
-$files = @()
-foreach ($kind in $targets.Keys) {
-    foreach ($relative in $required) {
-        $files += [pscustomobject]@{
-            Source = Join-Path $source $relative
-            Target = Join-Path $targets[$kind] $relative
-            Backup = Join-Path (Join-Path $backup $kind) $relative
+    # Verify EVERY input and check local edits before any project scripts change.
+    # No backup/, ZIP copy, .bak or snapshot folder is created.
+    $entries = @()
+    $conflicts = @()
+    foreach ($name in $names) {
+        $src = Join-Path $assetsSource $name
+        $dest = Join-Path $assetsTarget $name
+        if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
+            throw "Missing source: $src. No project files changed."
+        }
+        $sourceHash = (Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash
+        $existingHash = $null
+        if (Test-Path -LiteralPath $dest -PathType Leaf) {
+            $existingHash = (Get-FileHash -LiteralPath $dest -Algorithm SHA256).Hash
+            if ($existingHash -ne $sourceHash -and -not $ForceManagedOverwrite -and
+                (-not $known.ContainsKey($name) -or $known[$name] -ne $existingHash)) {
+                $conflicts += $name
+            }
+        }
+        $entries += [pscustomobject]@{
+            Name = $name; Source = $src; Target = $dest
+            Hash = $sourceHash; Existing = $existingHash
         }
     }
-}
-foreach ($relative in $tooling) {
-    $files += [pscustomobject]@{
-        Source = Join-Path $SourceRoot $relative
-        Target = Join-Path $Root $relative
-        Backup = Join-Path (Join-Path $backup 'tools') $relative
+    if ($conflicts.Count -gt 0) {
+        throw ("Refusing to overwrite $($conflicts.Count) locally modified or untracked Unity scripts. " +
+            "Commit local edits first, inspect the differences, then use -ForceManagedOverwrite only if appropriate: " +
+            ($conflicts -join ', '))
     }
-}
-foreach ($file in $files) {
-    $exists = Test-Path -LiteralPath $file.Target -PathType Leaf
-    if ($exists -and (Get-FileHash -LiteralPath $file.Source).Hash -eq (Get-FileHash -LiteralPath $file.Target).Hash) { continue }
-    if ($exists) {
-        New-Item -ItemType Directory -Path (Split-Path -Parent $file.Backup) -Force | Out-Null
-        Copy-Item -LiteralPath $file.Target -Destination $file.Backup
-    }
-    $changes += $file
-}
 
-# The download is complete before any script changes. Close Unity while updating
-# to prevent compilation of a partially copied set of scripts.
-foreach ($change in $changes) {
-    New-Item -ItemType Directory -Path (Split-Path -Parent $change.Target) -Force | Out-Null
-    Copy-Item -LiteralPath $change.Source -Destination $change.Target -Force
+    $changes = @($entries | Where-Object { $_.Hash -ne $_.Existing })
+    if ($Preview) {
+        Write-Host "PREVIEW: manifest scripts $($names.Count), changes $($changes.Count), no project files written."
+        return
+    }
+
+    if ($OpenUnity) { $editor = Find-Editor }
+    foreach ($entry in $changes) {
+        New-Item -ItemType Directory -Path (Split-Path -Parent $entry.Target) -Force | Out-Null
+        Copy-Item -LiteralPath $entry.Source -Destination $entry.Target -Force
+        if ((Get-FileHash -LiteralPath $entry.Target -Algorithm SHA256).Hash -ne $entry.Hash) {
+            throw "Verification failed for $($entry.Name). Review Unity project state before retrying."
+        }
+    }
+    $hashes = @{}
+    foreach ($entry in $entries) { $hashes[$entry.Name] = $entry.Hash }
+    @{version=1; hashes=$hashes} | ConvertTo-Json -Depth 5 |
+        Set-Content -LiteralPath $statePath -Encoding UTF8
+
+    @{projectPath=$project} | ConvertTo-Json |
+        Set-Content -LiteralPath $selectionFile -Encoding UTF8
+    Write-Host "Verified $($names.Count) script paths; updated $($changes.Count) in Unity project."
+    Write-Host 'Unity writes .meta files during import. No temporary files are retained by TFM.'
+    if ($OpenUnity) { Launch-Project $editor }
 }
-foreach ($file in $files) {
-    if ((Get-FileHash -LiteralPath $file.Source).Hash -ne
-        (Get-FileHash -LiteralPath $file.Target).Hash) {
-        throw "Verification failed for $($file.Target)"
+finally {
+    # Temporary network staging is outside every repository and removed.
+    if ($stage -and (Test-Path -LiteralPath $stage)) {
+        Remove-Item -LiteralPath $stage -Recurse -Force
     }
 }
-
-# Remember the project only after installation succeeds.
-$selectionJson = @{ projectPath = $project } | ConvertTo-Json
-if (-not (Test-Path -LiteralPath $selectionFile) -or
-    (Get-Content -LiteralPath $selectionFile -Raw).Trim() -ne $selectionJson.Trim()) {
-    if (Test-Path -LiteralPath $selectionFile) {
-        New-Item -ItemType Directory -Path $backup -Force | Out-Null
-        Copy-Item -LiteralPath $selectionFile -Destination (Join-Path $backup '.tfm-unity-project.json')
-    }
-    Set-Content -LiteralPath $selectionFile -Value $selectionJson -Encoding UTF8
-}
-Write-Host "Verified $($required.Count) Unity C# scripts. Changed $($changes.Count) files."
-if (Test-Path -LiteralPath $backup) { Write-Host "Previous scripts backed up at: $backup" }
-Write-Host "Open Unity project: $project"
-Write-Host 'Unity will create the training scene on first import. Use TFM > Open Training Yard, then press Play.'
-Write-Host "Next time, run: powershell -ExecutionPolicy Bypass -File `"$(Join-Path $Root 'Open-TFM-Unity.ps1')`""
-
-if ($OpenUnity) { Open-TrainingProject $editor }

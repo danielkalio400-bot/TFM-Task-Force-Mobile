@@ -25,28 +25,31 @@ root. To update an existing project, close Unity and run:
 ./Update-TFM-Unity.ps1 -Root "C:\Users\danie\bazaara\TFM-Task-Force-Mobile" -OpenUnity
 ```
 
-The updater works with ZIP downloads as well as Git clones. It checks all ten
-C# scripts and four PowerShell tools before copying, backs up changed scripts under `backups`,
-preserves `.meta` files and custom scenes, and verifies installed file hashes.
-It downloads scripts directly from `raw.githubusercontent.com`; it does not
-require GitHub's archive host. If any download fails, project files stay untouched.
-It can locate and reopen the project's Unity version in the standard Hub location.
-For another Editor installation location, pass `-UnityEditorPath` with its executable.
+The updater reads the versioned `TFM-Source-Manifest.txt` and installs all
+maintained C# sources, including Training, Performance, Gameplay, UI and Editor
+components. It checks every file before writing and stores only installed
+SHA-256 hashes in the actual Unity project's `ProjectSettings/TFMSourceHashes.json`.
+**No backup folders, copies, ZIP archives or .bak files are created.** Save
+custom scripts in Git before updating. The installer refuses to overwrite
+local changes it cannot prove came from a previous managed install; use
+`-ForceManagedOverwrite` only after explicitly reviewing such differences.
 
-The importer and updater detect projects in `GameClient/TFM-Unity`, `TFM-Unity`,
-and an additional `TFM-Unity` folder inside either path. A complete project must
-contain `Assets`, `Packages/manifest.json`, and `ProjectSettings/ProjectVersion.txt`.
-When two projects exist, select the actual project explicitly; for example:
-
+For a Git clone or extracted ZIP, update the source files and then run:
 ```powershell
-./Update-TFM-Unity.ps1 -Root "C:\Users\danie\bazaara\TFM-Task-Force-Mobile" -ProjectPath "GameClient/TFM-Unity/TFM-Unity" -OpenUnity
+./Update-TFM-Unity.ps1 -Root "$PWD" -Preview
+./Update-TFM-Unity.ps1 -Root "$PWD"
 ```
+To fetch the latest manifest and scripts directly from GitHub, use
+`-DownloadLatest`; transient download staging is removed from the OS temp
+directory. `-SourceRoot` can point to a different local checked-out source.
+No Unity-generated `.meta`, `Packages`, `Library` or custom scenes are
+overwritten. Install missing Unity editor modules through Unity Hub.
 
-This updates the nested project in place and saves the selection in the ignored
-`.tfm-unity-project.json`. Existing scenes and the other project are preserved.
-The scripts never print running Unity command lines, which can contain sign-in tokens.
-The updated import, update, scaffold and launch scripts are installed into the
-repository root too, replacing old copies with backups.
+The importer and updater recognize `GameClient/TFM-Unity`, `TFM-Unity`,
+and nested project paths. Pass `-ProjectPath` when there is more than one.
+A complete project contains `Assets`, `Packages/manifest.json` and
+`ProjectSettings/ProjectVersion.txt`. A saved selection lives in the ignored
+`.tfm-unity-project.json`. No secret-bearing Editor command lines are printed.
 
 Use `./Open-TFM-Unity.ps1` for future launches. It reads the saved selection,
 verifies that the TFM scripts exist, and launches that exact project with
