@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "status": "concept-catalog-not-scenes",
+  "originalityRule": "All maps require original geometry, art, audio, lighting, navigation and level design with provenance tracking.",
+  "maps": [
+    { "id": "harborline", "name": "Harborline", "section": "multiplayer" },
+    { "id": "rust-terminal", "name": "Rust Terminal", "section": "multiplayer" },
+    { "id": "glass-quarter", "name": "Glass Quarter", "section": "multiplayer" },
+    { "id": "canyon-relay", "name": "Canyon Relay", "section": "multiplayer" },
+    { "id": "solar-yard", "name": "Solar Yard", "section": "multiplayer" },
+    { "id": "old-station", "name": "Old Station", "section": "multiplayer" },
+    { "id": "rain-district", "name": "Rain District", "section": "multiplayer" },
+    { "id": "transit-loop", "name": "Transit Loop", "section": "multiplayer" },
+    { "id": "slate-factory", "name": "Slate Factory", "section": "multiplayer" },
+    { "id": "night-market", "name": "Night Market", "section": "multiplayer" },
+    { "id": "cliff-depot", "name": "Cliff Depot", "section": "multiplayer" },
+    { "id": "signal-plaza", "name": "Signal Plaza", "section": "multiplayer" },
+
+    { "id": "frontier-island", "name": "Frontier Island", "section": "battle-royale" },
+    { "id": "alcatraz-original", "name": "Alcatraz Original", "section": "battle-royale", "note": "Real-world place reference only; proprietary map layouts must not be copied." },
+    { "id": "delta-coast", "name": "Delta Coast", "section": "battle-royale" },
+    { "id": "copper-basin", "name": "Copper Basin", "section": "battle-royale" },
+    { "id": "northern-reach", "name": "Northern Reach", "section": "battle-royale" },
+    { "id": "floodplain", "name": "Floodplain", "section": "battle-royale" },
+    { "id": "solstice-valley", "name": "Solstice Valley", "section": "battle-royale" },
+    { "id": "meridian-ridge", "name": "Meridian Ridge", "section": "battle-royale" },
+
+    { "id": "silent-research", "name": "Silent Research", "section": "zombies" },
+    { "id": "ember-town", "name": "Ember Town", "section": "zombies" },
+    { "id": "midnight-terminal", "name": "Midnight Terminal", "section": "zombies" },
+    { "id": "fog-observatory", "name": "Fog Observatory", "section": "zombies" },
+    { "id": "hollow-metro", "name": "Hollow Metro", "section": "zombies" },
+    { "id": "echo-sanctuary", "name": "Echo Sanctuary", "section": "zombies" },
+
+    { "id": "ash-quarantine", "name": "Ash Quarantine", "section": "dmz-recon" },
+    { "id": "breakwater-sector", "name": "Breakwater Sector", "section": "dmz-recon" },
+    { "id": "granite-expanse", "name": "Granite Expanse", "section": "dmz-recon" },
+    { "id": "cold-storage", "name": "Cold Storage", "section": "dmz-recon" },
+    { "id": "lantern-exclusion", "name": "Lantern Exclusion", "section": "dmz-recon" },
+    { "id": "dusk-frontier", "name": "Dusk Frontier", "section": "dmz-recon" }
+  ]
+}

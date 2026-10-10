@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/section-recovery.schema.json",
+  "title": "TFM Section Recovery Snapshot",
+  "type": "object",
+  "required": ["recoveryId", "matchId", "playerId", "sectionId", "serverId", "expiresAt"],
+  "properties": {
+    "recoveryId": { "type": "string", "minLength": 1 },
+    "matchId": { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "sectionId": { "enum": ["multiplayer", "battle-royale", "zombies", "dmz-recon"] },
+    "serverId": { "type": "string", "minLength": 1 },
+    "mapId": { "type": "string" },
+    "runtimePhase": { "type": "string" },
+    "score": { "type": "integer", "minimum": 0 },
+    "health": { "type": "integer", "minimum": 0 },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}

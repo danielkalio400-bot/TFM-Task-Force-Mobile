@@ -47,6 +47,12 @@ import { homeSections } from "./section-contracts.mjs";
 import { BattleRoyaleRuntimeService } from "./services/br-runtime.mjs";
 import { CoopRuntimeService } from "./services/coop-runtime.mjs";
 import { ExtractionRuntimeService } from "./services/extraction-runtime.mjs";
+import { handleContentSession } from "./routes/content-session.mjs";
+import { originalMapCatalog, contentPackCatalog } from "./content-contracts.mjs";
+import { MapCatalogService } from "./services/map-catalog.mjs";
+import { ContentInstallationService } from "./services/content-installation.mjs";
+import { SectionRecoveryService } from "./services/section-recovery.mjs";
+import { SectionSessionCoordinator } from "./services/section-session-coordinator.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -88,6 +94,16 @@ export function makeServer() {
   const battleRoyaleRuntime = new BattleRoyaleRuntimeService();
   const coopRuntime = new CoopRuntimeService();
   const extractionRuntime = new ExtractionRuntimeService();
+  const mapCatalog = new MapCatalogService(originalMapCatalog);
+  const contentInstallation = new ContentInstallationService(contentPackCatalog);
+  const sectionRecovery = new SectionRecoveryService();
+  const sectionSessions = new SectionSessionCoordinator({
+    maps: mapCatalog,
+    multiplayer: modeRuntime,
+    battleRoyale: battleRoyaleRuntime,
+    coop: coopRuntime,
+    extraction: extractionRuntime,
+  });
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -138,6 +154,9 @@ export function makeServer() {
         battleRoyaleRuntime: "local-in-memory-prototype",
         cooperativeRuntime: "local-in-memory-prototype",
         extractionRuntime: "local-in-memory-prototype",
+        contentPacks: "metadata-state-prototype",
+        originalMapCatalog: "concept-metadata-only",
+        sectionRecovery: "local-single-use-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -187,6 +206,12 @@ export function makeServer() {
       battleRoyale: battleRoyaleRuntime,
       coop: coopRuntime,
       extraction: extractionRuntime,
+    })) return;
+    if (await handleContentSession(request, response, path, {
+      maps: mapCatalog,
+      content: contentInstallation,
+      sectionSessions,
+      recovery: sectionRecovery,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

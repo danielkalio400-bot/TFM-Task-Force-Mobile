@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "id": "core",
+      "displayName": "TFM Core",
+      "section": "core",
+      "requiredForOnlinePlay": true,
+      "estimatedDownloadBytes": 0
+    },
+    {
+      "id": "multiplayer",
+      "displayName": "Multiplayer Content",
+      "section": "multiplayer",
+      "requiredForOnlinePlay": true,
+      "estimatedDownloadBytes": 0
+    },
+    {
+      "id": "battle-royale",
+      "displayName": "Battle Royale Content",
+      "section": "battle-royale",
+      "requiredForOnlinePlay": true,
+      "estimatedDownloadBytes": 0
+    },
+    {
+      "id": "zombies",
+      "displayName": "Zombies Content",
+      "section": "zombies",
+      "requiredForOnlinePlay": false,
+      "estimatedDownloadBytes": 0
+    },
+    {
+      "id": "dmz-recon",
+      "displayName": "DMZ: Recon Content",
+      "section": "dmz-recon",
+      "requiredForOnlinePlay": false,
+      "estimatedDownloadBytes": 0
+    }
+  ],
+  "note": "Download sizes remain zero until real Unity assets and packages are produced and measured."
+}
