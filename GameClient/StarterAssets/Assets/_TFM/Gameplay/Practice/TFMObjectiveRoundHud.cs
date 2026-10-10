@@ -27,7 +27,7 @@ namespace TFM.Gameplay.Practice
             }
             Rect safe = Screen.safeArea;
             float width = Mathf.Min(285f, Mathf.Max(180f, safe.width * 0.43f));
-            float height = 160f;
+            float height = 216f;
             // Bottom-right, above mobile action buttons.
             Rect panel = new Rect(safe.xMax - width - 12f,
                 safe.yMax - height - (Application.isMobilePlatform ? 280f : 18f),
@@ -44,13 +44,34 @@ namespace TFM.Gameplay.Practice
                 "Score " + round.Score + "  |  Best " + round.LocalBest, _body);
             if (round.Phase == TFMObjectiveRoundPhase.Active)
             {
-                if (GUI.Button(new Rect(panel.x + 12f, panel.y + 116f,
-                        width - 24f, 36f), "Stop course"))
+                GUI.Label(new Rect(panel.x + 6f, panel.y + 110f,
+                    width - 12f, 25f),
+                    "Waypoint " + (round.NextWaypointIndex + 1) +
+                    " | " + round.NextWaypointDirection + " | " +
+                    Mathf.CeilToInt(round.NextWaypointDistanceMeters) + " m direct",
+                    _body);
+                GUI.Label(new Rect(panel.x + 6f, panel.y + 136f,
+                    width - 12f, 24f),
+                    "Last leg: " + round.LastLegSeconds.ToString("0.0") + "s", _body);
+                if (GUI.Button(new Rect(panel.x + 12f, panel.y + 169f,
+                        width - 24f, 40f), "Stop course"))
                     round.Cancel();
             }
-            else if (GUI.Button(new Rect(panel.x + 12f, panel.y + 116f,
-                     width - 24f, 36f), "Start / retry course"))
-                round.Begin();
+            else
+            {
+                GUI.Label(new Rect(panel.x + 6f, panel.y + 110f,
+                    width - 12f, 25f),
+                    "Fastest: " + (round.BestCourseTimeSeconds > 0f
+                        ? round.BestCourseTimeSeconds.ToString("0.0") + "s" : "--"),
+                    _body);
+                GUI.Label(new Rect(panel.x + 6f, panel.y + 137f,
+                    width - 12f, 24f),
+                    round.NewPersonalBestTime ? "New fastest local course time!" :
+                    "Local practice only - no online rank", _body);
+                if (GUI.Button(new Rect(panel.x + 12f, panel.y + 169f,
+                         width - 24f, 40f), "Start / retry course"))
+                    round.Begin();
+            }
         }
     }
 }

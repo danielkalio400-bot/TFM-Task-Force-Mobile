@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "bulk": 48,
+  "scope": "Unity offline training-yard waypoint timing and navigational cues",
+  "directions": [
+    "N",
+    "S",
+    "E",
+    "W",
+    "HERE"
+  ],
+  "distance": "XZ planar direct world-unit distance, labelled metres in authored blockout",
+  "timing": "per-leg elapsed active timer, and fastest completed time in PlayerPrefs",
+  "preserved": "existing local score and local best key, ordered physical waypoint completion",
+  "security": "not server-authoritative; no XP, coins, progression or matchmaking rank",
+  "platforms": [
+    "Android",
+    "iOS",
+    "Windows"
+  ],
+  "validation": "Node reference and Unity source tests only; real Unity compilation and device tests outstanding"
+}

@@ -13,6 +13,7 @@ namespace TFM.Gameplay.Practice
     public sealed class TFMObjectiveRound : MonoBehaviour
     {
         private const string BestKey = "tfm.prototype.waypoint.best.v1";
+        private const string BestTimeKey = "tfm.prototype.waypoint.best-time.v1";
         [SerializeField, Range(15f, 300f)] private float timeLimit = 90f;
         [SerializeField] private TFMTrainingTrial training;
         [SerializeField] private Transform player;
@@ -21,6 +22,7 @@ namespace TFM.Gameplay.Practice
             new List<TFMObjectiveWaypoint>();
         private readonly HashSet<int> _awarded = new HashSet<int>();
         private float _elapsed;
+        private float _lastArrivalTime;
         private bool _paused;
 
         public TFMObjectiveRoundPhase Phase { get; private set; } = TFMObjectiveRoundPhase.Ready;
@@ -30,7 +32,44 @@ namespace TFM.Gameplay.Practice
         public float RemainingSeconds { get { return Mathf.Max(0f, timeLimit - _elapsed); } }
         public int Score { get; private set; }
         public int LocalBest { get { return PlayerPrefs.GetInt(BestKey, 0); } }
+        public float BestCourseTimeSeconds { get { return PlayerPrefs.GetFloat(BestTimeKey, 0f); } }
+        public float ElapsedSeconds { get { return _elapsed; } }
+        public float LastLegSeconds { get; private set; }
+        public bool NewPersonalBestTime { get; private set; }
         public bool Paused { get { return _paused; } }
+        public float NextWaypointDistanceMeters
+        {
+            get
+            {
+                if (Phase != TFMObjectiveRoundPhase.Active ||
+                    player == null || NextWaypointIndex >= _waypoints.Count ||
+                    _waypoints[NextWaypointIndex] == null)
+                    return 0f;
+                Vector3 offset = _waypoints[NextWaypointIndex].transform.position -
+                    player.position;
+                offset.y = 0f;
+                return offset.magnitude;
+            }
+        }
+        // World-space compass directions, not street/navigation routing.
+        public string NextWaypointDirection
+        {
+            get
+            {
+                if (Phase != TFMObjectiveRoundPhase.Active ||
+                    player == null || NextWaypointIndex >= _waypoints.Count ||
+                    _waypoints[NextWaypointIndex] == null)
+                    return string.Empty;
+                TFMObjectiveWaypoint marker = _waypoints[NextWaypointIndex];
+                Vector3 offset = marker.transform.position - player.position;
+                offset.y = 0f;
+                if (offset.sqrMagnitude <= marker.Radius * marker.Radius)
+                    return "HERE";
+                return Mathf.Abs(offset.x) > Mathf.Abs(offset.z)
+                    ? (offset.x >= 0f ? "E" : "W")
+                    : (offset.z >= 0f ? "N" : "S");
+            }
+        }
         public event Action<TFMObjectiveRoundPhase> PhaseChanged;
 
         public void Configure(Transform controlledPlayer, TFMTrainingTrial trainingTrial,
@@ -60,6 +99,9 @@ namespace TFM.Gameplay.Practice
             _awarded.Clear();
             NextWaypointIndex = 0;
             _elapsed = 0f;
+            _lastArrivalTime = 0f;
+            LastLegSeconds = 0f;
+            NewPersonalBestTime = false;
             Score = 0;
             SetPhase(TFMObjectiveRoundPhase.Active);
             RefreshMarkers();
@@ -89,7 +131,11 @@ namespace TFM.Gameplay.Practice
             TFMObjectiveWaypoint next = _waypoints[NextWaypointIndex];
             if (!next.ContainsXZ(player.position)) return;
             if (_awarded.Add(NextWaypointIndex))
+            {
                 Score += 100;
+                LastLegSeconds = Mathf.Max(0f, _elapsed - _lastArrivalTime);
+                _lastArrivalTime = _elapsed;
+            }
             NextWaypointIndex++;
             if (NextWaypointIndex >= _waypoints.Count)
             {
@@ -105,11 +151,20 @@ namespace TFM.Gameplay.Practice
             if (result == TFMObjectiveRoundPhase.Completed)
             {
                 Score += Mathf.CeilToInt(RemainingSeconds * 2f);
+                bool saveBest = false;
                 if (Score > LocalBest)
                 {
                     PlayerPrefs.SetInt(BestKey, Score);
-                    PlayerPrefs.Save();
+                    saveBest = true;
                 }
+                float previousFastest = BestCourseTimeSeconds;
+                if (_elapsed > 0f && (previousFastest <= 0f || _elapsed < previousFastest))
+                {
+                    NewPersonalBestTime = true;
+                    PlayerPrefs.SetFloat(BestTimeKey, _elapsed);
+                    saveBest = true;
+                }
+                if (saveBest) PlayerPrefs.Save();
             }
             SetPhase(result);
             RefreshMarkers();
