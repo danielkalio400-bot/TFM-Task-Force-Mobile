@@ -37,6 +37,11 @@ import { PartyService } from "./services/parties.mjs";
 import { RewardService } from "./services/rewards.mjs";
 import { ReconnectRestoreService } from "./services/reconnect-restores.mjs";
 import { OperationsHealthService } from "./services/operations-health.mjs";
+import { handleRuntimeOrchestration } from "./routes/runtime-orchestration.mjs";
+import { ModeRuntimeService } from "./services/mode-runtime.mjs";
+import { PartyQueueCoordinator } from "./services/party-queue.mjs";
+import { ResultPipelineService } from "./services/result-pipeline.mjs";
+import { LiveOperationsService } from "./services/live-operations.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -71,6 +76,10 @@ export function makeServer() {
   const rewards = new RewardService();
   const reconnectRestores = new ReconnectRestoreService();
   const operationsHealth = new OperationsHealthService({ servers, incidents });
+  const modeRuntime = new ModeRuntimeService();
+  const partyQueue = new PartyQueueCoordinator({ parties, queues: regionalQueues });
+  const resultPipeline = new ResultPipelineService({ matchResults, rewards, profiles });
+  const liveOperations = new LiveOperationsService();
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -114,6 +123,10 @@ export function makeServer() {
         rewardGrants: "local-idempotent-prototype",
         reconnectRestoration: "local-single-use-prototype",
         operationsHealth: "local-aggregate-prototype",
+        modeRuntime: "local-in-memory-prototype",
+        partyQueue: "local-composition-prototype",
+        resultPipeline: "trusted-local-server-prototype",
+        liveOperations: "local-regional-state-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -151,6 +164,12 @@ export function makeServer() {
       rewards,
       restores: reconnectRestores,
       health: operationsHealth,
+    })) return;
+    if (await handleRuntimeOrchestration(request, response, path, {
+      modeRuntime,
+      partyQueue,
+      resultPipeline,
+      liveOperations,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/mode-runtime.schema.json",
+  "title": "TFM Mode Runtime",
+  "type": "object",
+  "required": ["matchId", "modeId", "mapId", "phase", "connectedPlayers"],
+  "properties": {
+    "matchId": { "type": "string", "minLength": 1 },
+    "modeId": { "type": "string", "minLength": 1 },
+    "mapId": { "type": "string", "minLength": 1 },
+    "phase": { "enum": ["waiting", "warmup", "active", "sudden-death", "completed", "cancelled"] },
+    "connectedPlayers": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "alivePlayers": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "elapsedSeconds": { "type": "number", "minimum": 0 }
+  }
+}
