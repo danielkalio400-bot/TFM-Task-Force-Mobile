@@ -37,7 +37,7 @@ namespace TFM.Gameplay.Training
                 safe.yMin + (Application.isMobilePlatform ? 8f : 14f), width, height);
             GUI.Box(panel, GUIContent.none);
             GUI.Label(new Rect(panel.x + 8f, panel.y + 8f, width - 16f, 28f),
-                "TFM | ORIGINAL TRAINING TRIAL", _header);
+                "TFM | MOVING TARGET PRACTICE", _header);
 
             string headline = trial.Phase == TFMTrainingTrialPhase.Running
                 ? "TIME  " + Mathf.CeilToInt(trial.RemainingTime) + "s   TARGETS  " +

@@ -33,6 +33,7 @@ Gameplay/Combat/TFMDamageKind.cs
 Gameplay/Combat/TFMHealth.cs
 Gameplay/Combat/TFMHitscanWeapon.cs
 Gameplay/Combat/TFMTargetDummy.cs
+Gameplay/Combat/TFMTargetMotion.cs
 Gameplay/Combat/TFMWeaponDefinition.cs
 Gameplay/Combat/TFMWeaponRuntimeState.cs
 Gameplay/Extraction/TFMExtractionContract.cs

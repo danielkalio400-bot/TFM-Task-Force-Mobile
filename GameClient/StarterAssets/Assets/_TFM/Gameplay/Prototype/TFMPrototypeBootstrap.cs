@@ -49,6 +49,17 @@ namespace TFM.Gameplay.Prototype
                     trialHud = gameObject.AddComponent<TFMTrainingTrialHud>();
                 trialHud.Configure(trial);
 
+                // Install an optional moving-target drill in memory only. Existing
+                // authored scene assets and target positions remain untouched.
+                TFMTargetDummy[] practiceTargets = GetComponentsInChildren<TFMTargetDummy>(true);
+                for (int i = 0; i < practiceTargets.Length; i++)
+                {
+                    TFMTargetMotion motion = practiceTargets[i].GetComponent<TFMTargetMotion>();
+                    if (motion != null) continue; // Respect authored motion settings.
+                    motion = practiceTargets[i].gameObject.AddComponent<TFMTargetMotion>();
+                    motion.Configure(0.65f, 0.18f + i * 0.045f, i * 1.7f);
+                }
+
                 TFMObjectiveRound course = GetComponent<TFMObjectiveRound>();
                 if (course == null) course = gameObject.AddComponent<TFMObjectiveRound>();
                 TFMObjectiveWaypoint[] markers =
