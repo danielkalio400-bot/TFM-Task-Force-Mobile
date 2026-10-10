@@ -53,6 +53,12 @@ import { MapCatalogService } from "./services/map-catalog.mjs";
 import { ContentInstallationService } from "./services/content-installation.mjs";
 import { SectionRecoveryService } from "./services/section-recovery.mjs";
 import { SectionSessionCoordinator } from "./services/section-session-coordinator.mjs";
+import { handleReadiness } from "./routes/readiness.mjs";
+import { contentCompatibility, mapReadinessContract } from "./readiness-contracts.mjs";
+import { ContentCompatibilityService } from "./services/content-compatibility.mjs";
+import { MapReadinessService } from "./services/map-readiness.mjs";
+import { SessionPersistenceService } from "./services/session-persistence.mjs";
+import { SectionLifecycleService } from "./services/section-lifecycle.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -97,6 +103,10 @@ export function makeServer() {
   const mapCatalog = new MapCatalogService(originalMapCatalog);
   const contentInstallation = new ContentInstallationService(contentPackCatalog);
   const sectionRecovery = new SectionRecoveryService();
+  const compatibility = new ContentCompatibilityService({ installation: contentInstallation, contract: contentCompatibility });
+  const mapReadiness = new MapReadinessService(mapCatalog);
+  const sessionPersistence = new SessionPersistenceService();
+  const sectionLifecycles = new SectionLifecycleService();
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
@@ -157,6 +167,10 @@ export function makeServer() {
         contentPacks: "metadata-state-prototype",
         originalMapCatalog: "concept-metadata-only",
         sectionRecovery: "local-single-use-prototype",
+        contentCompatibility: "local-gate-prototype",
+        mapReadiness: "local-validation-metadata",
+        sessionPersistence: "local-sequenced-snapshots",
+        sectionLifecycle: "local-state-machine-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -212,6 +226,16 @@ export function makeServer() {
       content: contentInstallation,
       sectionSessions,
       recovery: sectionRecovery,
+    })) return;
+    if (await handleReadiness(request, response, path, {
+      compatibility,
+      mapReadiness,
+      persistence: sessionPersistence,
+      lifecycles: sectionLifecycles,
+      contracts: {
+        compatibility: contentCompatibility,
+        mapReadiness: mapReadinessContract,
+      },
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

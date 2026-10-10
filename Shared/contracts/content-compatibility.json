@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "supportedManifestVersion": 1,
+  "requiredCorePackIds": ["core"],
+  "sectionPackIds": {
+    "multiplayer": ["core", "multiplayer"],
+    "battle-royale": ["core", "battle-royale"],
+    "zombies": ["core", "zombies"],
+    "dmz-recon": ["core", "dmz-recon"]
+  },
+  "rule": "Compatibility gates are metadata only until real built content versions exist."
+}

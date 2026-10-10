@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "defaultState": "concept-only",
+  "releaseChecks": [
+    "gameplay-validation",
+    "navigation-validation",
+    "mobile-performance-validation",
+    "pc-performance-validation",
+    "lighting-validation",
+    "audio-validation",
+    "qa-validation"
+  ],
+  "rule": "Concept names do not imply implemented or playable maps."
+}

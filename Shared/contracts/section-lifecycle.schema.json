@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/section-lifecycle.schema.json",
+  "title": "TFM Section Lifecycle State",
+  "type": "object",
+  "required": ["lifecycleId", "sectionId", "modeId", "mapId", "phase"],
+  "properties": {
+    "lifecycleId": { "type": "string", "minLength": 1 },
+    "sectionId": { "enum": ["multiplayer", "battle-royale", "zombies", "dmz-recon"] },
+    "modeId": { "type": "string", "minLength": 1 },
+    "mapId": { "type": "string", "minLength": 1 },
+    "matchId": { "type": "string" },
+    "phase": {
+      "enum": ["idle", "checking-content", "checking-map", "creating-session", "allocating-server", "connecting", "active", "recovering", "results", "returning", "failed"]
+    }
+  }
+}
