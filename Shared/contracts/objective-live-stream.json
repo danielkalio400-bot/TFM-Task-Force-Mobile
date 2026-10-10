@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "bulk": 35,
+  "transport": "Node HTTP server-sent events",
+  "streamPath": "/v1/dev/objective-live/:matchId/events",
+  "events": [
+    "snapshot",
+    "delta",
+    "resync",
+    "access-ended"
+  ],
+  "readOnly": true,
+  "capabilities": "opaque 256-bit bearer issued only after injected-authenticated ObjectiveReconnectBridge.connect",
+  "bearer": "Authorization header only, never URL",
+  "durationMs": 60000,
+  "streamLimits": {
+    "maxViewerSessions": 512,
+    "oneConcurrentStreamPerToken": true,
+    "pollIntervalMs": 250,
+    "pageSize": 100
+  },
+  "serverSideRules": [
+    "match-scoped read access",
+    "no public token issuance",
+    "no public objective score writing",
+    "no trusted server admission over HTTP",
+    "resync for truncated event log",
+    "terminal stream close",
+    "disconnection cleanup"
+  ],
+  "productionRequirements": [
+    "BazID server-side token validation and game-session ownership",
+    "TLS termination",
+    "real dedicated server process and event capture physics",
+    "durable persistence and lossless event bus",
+    "rate limiting and connection quotas",
+    "Unity on-device streaming client",
+    "observability and disconnection metrics"
+  ],
+  "notImplemented": [
+    "production authentication",
+    "signed server messages",
+    "socket multiplayer transport",
+    "match result XP/rewards",
+    "anti-cheat physics"
+  ]
+}

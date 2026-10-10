@@ -1,5 +1,9 @@
 import { createServer } from "node:http";
 import { ServerObjectiveRoundsService } from "./services/server-objective-rounds.mjs";
+import { ObjectiveReconnectBridge } from "./services/objective-reconnect-bridge.mjs";
+import { ObjectiveLiveGateway } from "./services/objective-live-gateway.mjs";
+import { handleObjectiveLiveStream } from "./routes/objective-live-stream.mjs";
+import { objectiveLiveContract } from "./objective-live-contracts.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
 import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
 import { objectiveReconnectContract } from "./objective-reconnect-contracts.mjs";
@@ -258,6 +262,14 @@ export function makeServer() {
     persistence: sessionPersistence,
   });
   const authoritativeRecovery = new AuthoritativeRecoveryService(sessionPersistence);
+  const objectiveReconnectBridge = new ObjectiveReconnectBridge({
+    rounds: serverObjectiveRounds, assignments: assignmentsV2,
+    persistence: sessionPersistence
+    // Deliberately no subject verifier until BazID server auth exists.
+  });
+  const objectiveLiveGateway = new ObjectiveLiveGateway({
+    bridge: objectiveReconnectBridge, rounds: serverObjectiveRounds
+  });
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -505,6 +517,9 @@ export function makeServer() {
     })) return;
     if (request.method === "GET" && path === "/v1/runtime/objective-reconnect-bridge")
       return sendJson(response, 200, objectiveReconnectContract);
+    if (await handleObjectiveLiveStream(request, response, path, {
+      gateway: objectiveLiveGateway, contract: objectiveLiveContract,
+    })) return;
 
     return sendJson(response, 404, { error: "not_found" });
   });
