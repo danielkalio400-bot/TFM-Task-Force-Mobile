@@ -31,9 +31,11 @@ test("missing shots and already-cleared targets break streak instead of farming 
 });
 test("silver, cancelled, expired and retry states remain local",()=>{
  const drill=new Drill(2);
- drill.shot({hit:true,targetIndex:0,targetCleared:true});
+ drill.shot({hit:true,targetIndex:0,targetCleared:false});
  drill.shot({hit:false});
+ drill.shot({hit:true,targetIndex:0,targetCleared:true});
  drill.shot({hit:true,targetIndex:1,targetCleared:true});
+ assert.equal(drill.snapshot().accuracy,0.75);
  assert.equal(drill.snapshot().medal,"Silver");
  const fresh=drill.begin();
  assert.equal(fresh.shotsFired,0);
