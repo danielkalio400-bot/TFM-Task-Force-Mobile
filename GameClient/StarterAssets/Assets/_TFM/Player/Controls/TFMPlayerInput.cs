@@ -47,16 +47,19 @@ namespace TFM.Player.Controls
             }
         }
 
+#endif
+
         private void OnDisable()
         {
+#if ENABLE_INPUT_SYSTEM
             if (_enabledEnhancedTouch && EnhancedTouchSupport.enabled)
             {
                 EnhancedTouchSupport.Disable();
             }
             _enabledEnhancedTouch=false;
+#endif
             ResetTransientInput();
         }
-#endif
 
         private void ResetTransientInput()
         {

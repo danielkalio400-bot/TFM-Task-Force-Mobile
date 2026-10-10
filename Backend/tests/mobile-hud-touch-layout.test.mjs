@@ -42,7 +42,7 @@ test("Unity action and gesture paths reference one safe-area layout source",()=>
  assert.match(controls,/touchLookSensitivity/);
  for(const method of ["Fire","Jump","Reload","MoveZone","LookZone"])
    assert.ok(hud.includes("TFMMobileControlLayout."+method+"("),method);
- assert.match(layout,/screenHeight - bottomLeftPosition.y/);
+ assert.match(layout,/screenHeight\s*-\s*bottomLeftPosition\.y/);
  assert.match(layout,/GuiSafeArea/);
  assert.doesNotMatch(controls,/IsMobileButtonZone/);
 });
