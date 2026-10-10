@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/player-profile.schema.json",
+  "title": "TFM Player Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "playerId", "displayName", "level", "experience"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "playerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "level": { "type": "integer", "minimum": 1 },
+    "experience": { "type": "integer", "minimum": 0 }
+  }
+}

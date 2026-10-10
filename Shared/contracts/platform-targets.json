@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "engine": "Unity 6",
+  "renderPipeline": "URP",
+  "committedTargets": [
+    {
+      "id": "android",
+      "family": "mobile",
+      "input": ["touch", "gyro-optional", "controller-optional"],
+      "priority": "primary"
+    },
+    {
+      "id": "ios",
+      "family": "mobile",
+      "input": ["touch", "gyro-optional", "controller-optional"],
+      "priority": "primary"
+    },
+    {
+      "id": "windows",
+      "family": "desktop",
+      "input": ["keyboard-mouse", "controller"],
+      "priority": "committed"
+    }
+  ],
+  "frameRatePolicy": "30 FPS fallback to highest stable validated device/display rate; prioritize stable frame pacing"
+}
