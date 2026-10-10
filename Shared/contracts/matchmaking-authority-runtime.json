@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "systems": [
+    "time-bounded-search",
+    "oldest-first-fairness",
+    "region-aware-placement",
+    "skill-window-expansion",
+    "party-integrity",
+    "cross-platform-policy",
+    "queue-expiration",
+    "match-assignment-audit"
+  ],
+  "defaults": {
+    "maximumSearchSeconds": 120,
+    "initialSkillDelta": 100,
+    "maximumSkillDelta": 600,
+    "skillExpansionPer30Seconds": 150,
+    "maximumPartySize": 16
+  },
+  "rule": "Searches must expire, preserve party integrity, match only across a shared accepted region, and widen skill tolerance gradually rather than immediately ignoring fairness.",
+  "productionBoundary": "This is a deterministic local policy prototype. Production matchmaking still requires authenticated parties, distributed queues, server capacity, abuse controls, latency measurements and durable audit storage."
+}

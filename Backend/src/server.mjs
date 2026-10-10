@@ -99,6 +99,10 @@ import { authoritativeMatchRecordsRuntime } from "./match-authority-contracts.mj
 import { AuthoritativeMatchArchiveService } from "./services/authoritative-match-archive.mjs";
 import { ReplayTelemetryArchiveService } from "./services/replay-telemetry-archive.mjs";
 import { AuthoritativeResultPipelineService } from "./services/authoritative-result-pipeline.mjs";
+import { handleMatchmakingAuthority } from "./routes/matchmaking-authority.mjs";
+import { matchmakingAuthorityRuntime } from "./matchmaking-authority-contracts.mjs";
+import { FairMatchmakingPolicyService } from "./services/fair-matchmaking-policy.mjs";
+import { MatchmakingAuthorityService } from "./services/matchmaking-authority.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -178,6 +182,11 @@ export function makeServer() {
     archive: authoritativeMatchArchive,
     replay: replayTelemetryArchive,
     progression: progressionAuthority,
+  });
+  const fairMatchmakingPolicy = new FairMatchmakingPolicyService(matchmakingAuthorityRuntime);
+  const matchmakingAuthority = new MatchmakingAuthorityService({
+    policy: fairMatchmakingPolicy,
+    contract: matchmakingAuthorityRuntime,
   });
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
@@ -282,6 +291,7 @@ export function makeServer() {
         progressionLeaderboard: "local-snapshot-prototype",
         authoritativeMatchArchive: "local-validated-proof-prototype",
         replayTelemetryArchive: "local-sequenced-metadata-prototype",
+        matchmakingAuthority: "local-time-bounded-fair-policy-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -397,6 +407,11 @@ export function makeServer() {
       replay: replayTelemetryArchive,
       pipeline: authoritativeResultPipeline,
       contract: authoritativeMatchRecordsRuntime,
+    })) return;
+    if (await handleMatchmakingAuthority(request, response, path, {
+      matchmaking: matchmakingAuthority,
+      policy: fairMatchmakingPolicy,
+      contract: matchmakingAuthorityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
