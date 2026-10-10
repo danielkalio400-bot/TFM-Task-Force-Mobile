@@ -22,7 +22,7 @@ $stage = $null
 
 function Resolve-Project([string] $candidate) {
     if (-not [IO.Path]::IsPathRooted($candidate)) { $candidate = Join-Path $Root $candidate }
-    return [IO.Path]::GetFullPath($candidate).TrimEnd([char[]]@('/', '\\'))
+    return [IO.Path]::GetFullPath($candidate).TrimEnd([char[]]@('/', [IO.Path]::DirectorySeparatorChar))
 }
 function Test-Project([string] $folder) {
     return (Test-Path -LiteralPath (Join-Path $folder 'Assets') -PathType Container) -and
@@ -34,7 +34,7 @@ function Find-Editor {
     else {
         $versionFile = Join-Path $project 'ProjectSettings/ProjectVersion.txt'
         $value = Get-Content -LiteralPath $versionFile -Raw
-        if ($value -notmatch '(?m)^m_EditorVersion:\\s*([0-9]+\\.[0-9]+\\.[0-9]+[a-z][0-9]+)') {
+        if ($value -notmatch '(?m)^m_EditorVersion:\s*([0-9]+\.[0-9]+\.[0-9]+[a-z][0-9]+)') {
             throw 'Unity editor version unknown. Supply -UnityEditorPath.'
         }
         $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles')
@@ -59,13 +59,13 @@ function Parse-Manifest([string] $path) {
     if ($names.Count -eq 0) { throw "Empty source manifest: $path" }
     $seen = @{}
     foreach ($name in $names) {
-        if ($name -notmatch '^[a-zA-Z0-9_.\\/-]+\\.cs$' -or
-            $name -match '(^|[\\/])\\.\\.([\\/]|$)' -or $seen.ContainsKey($name)) {
+        if ($name -notmatch '^[a-zA-Z0-9_./-]+\.cs$' -or
+            $name -match '(^|/)\.\.(/|$)' -or $seen.ContainsKey($name)) {
             throw "Invalid or repeated source path in manifest: $name"
         }
         $seen[$name] = $true
     }
-    return ,$names
+    return $names
 }
 
 if ($ProjectPath) { $project = Resolve-Project $ProjectPath }
