@@ -42,6 +42,11 @@ import { ModeRuntimeService } from "./services/mode-runtime.mjs";
 import { PartyQueueCoordinator } from "./services/party-queue.mjs";
 import { ResultPipelineService } from "./services/result-pipeline.mjs";
 import { LiveOperationsService } from "./services/live-operations.mjs";
+import { handleSectionRuntimes } from "./routes/section-runtimes.mjs";
+import { homeSections } from "./section-contracts.mjs";
+import { BattleRoyaleRuntimeService } from "./services/br-runtime.mjs";
+import { CoopRuntimeService } from "./services/coop-runtime.mjs";
+import { ExtractionRuntimeService } from "./services/extraction-runtime.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -80,6 +85,9 @@ export function makeServer() {
   const partyQueue = new PartyQueueCoordinator({ parties, queues: regionalQueues });
   const resultPipeline = new ResultPipelineService({ matchResults, rewards, profiles });
   const liveOperations = new LiveOperationsService();
+  const battleRoyaleRuntime = new BattleRoyaleRuntimeService();
+  const coopRuntime = new CoopRuntimeService();
+  const extractionRuntime = new ExtractionRuntimeService();
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -127,6 +135,9 @@ export function makeServer() {
         partyQueue: "local-composition-prototype",
         resultPipeline: "trusted-local-server-prototype",
         liveOperations: "local-regional-state-prototype",
+        battleRoyaleRuntime: "local-in-memory-prototype",
+        cooperativeRuntime: "local-in-memory-prototype",
+        extractionRuntime: "local-in-memory-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -170,6 +181,12 @@ export function makeServer() {
       partyQueue,
       resultPipeline,
       liveOperations,
+    })) return;
+    if (await handleSectionRuntimes(request, response, path, {
+      sections: homeSections,
+      battleRoyale: battleRoyaleRuntime,
+      coop: coopRuntime,
+      extraction: extractionRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

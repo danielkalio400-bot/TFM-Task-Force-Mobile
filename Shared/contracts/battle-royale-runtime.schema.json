@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/battle-royale-runtime.schema.json",
+  "title": "TFM Battle Royale Runtime",
+  "type": "object",
+  "required": ["matchId", "connectedPlayers", "activePlayers", "zoneStage"],
+  "properties": {
+    "matchId": { "type": "string", "minLength": 1 },
+    "connectedPlayers": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "activePlayers": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "activeTeams": { "type": "integer", "minimum": 0 },
+    "zoneStage": { "type": "integer", "minimum": 0 },
+    "zoneRadiusMeters": { "type": "number", "minimum": 0 },
+    "finalStage": { "type": "boolean" }
+  }
+}

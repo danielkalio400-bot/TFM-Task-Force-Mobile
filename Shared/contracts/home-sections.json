@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "sections": [
+    {
+      "id": "multiplayer",
+      "displayName": "Multiplayer",
+      "role": "short-session competitive modes"
+    },
+    {
+      "id": "battle-royale",
+      "displayName": "Battle Royale",
+      "role": "large-session survival and rotating events"
+    },
+    {
+      "id": "zombies",
+      "displayName": "Zombies",
+      "role": "cooperative raid, survival and defense modes"
+    },
+    {
+      "id": "dmz-recon",
+      "displayName": "DMZ: Recon",
+      "role": "solo/squad extraction, contracts and special operations"
+    }
+  ],
+  "originalityRule": "TFM uses original maps, UI, art, audio and level design. Other games are benchmark references only."
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/extraction-contract.schema.json",
+  "title": "TFM Extraction Contract",
+  "type": "object",
+  "required": ["contractId", "objectiveType", "state", "requiredProgress", "progress"],
+  "properties": {
+    "contractId": { "type": "string", "minLength": 1 },
+    "objectiveType": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["available", "accepted", "active", "completed", "failed", "expired"] },
+    "requiredProgress": { "type": "integer", "minimum": 1 },
+    "progress": { "type": "integer", "minimum": 0 },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}
