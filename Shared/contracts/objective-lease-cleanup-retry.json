@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "bulk": 45,
+  "scope": "in-process expired dedicated server lease recovery",
+  "lifecycle": [
+    "active",
+    "cleanup-pending",
+    "closed"
+  ],
+  "retry": "host-triggered sweepExpired checks all pending cancellations, never renews expired leases",
+  "failureHandling": [
+    "retry transient trust revocation after host authorization restored",
+    "reconcile pending terminal persistence without duplicate round close",
+    "refuse to cancel a session reassigned to another server",
+    "retain failed attempts in operator diagnostics"
+  ],
+  "diagnostics": [
+    "active",
+    "expired",
+    "pendingCleanup",
+    "completedCleanup"
+  ],
+  "limitations": [
+    "in-memory only",
+    "no automatic scheduler",
+    "no durable distributed coordination",
+    "persistent identity verification and game binaries not deployed"
+  ]
+}

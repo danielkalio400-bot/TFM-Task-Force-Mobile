@@ -10,8 +10,9 @@ const methods=["openMatch","beginRound","captureObjective","closeRound",
  * It wraps the existing trusted ObjectiveDedicatedSessionBridge, never exposes
  * its underlying server adapter and never issues client tokens.
  *
- * Lease expiry is terminal for this monitor instance. The host must schedule
- * sweepExpired() (no background work is silently started by this class).
+ * Lease expiry is terminal for this monitor instance. Failed cleanup stays
+ * pending so a host can retry it without renewing or reissuing authority.
+ * The host must schedule sweepExpired(): no timer starts automatically.
  */
 export class ObjectiveServerLeaseMonitor {
   #bridge;
@@ -121,31 +122,72 @@ export class ObjectiveServerLeaseMonitor {
   sweepExpired() {
     const now=this.#now(),outcomes=[];
     for(const entry of this.#leases.values()) {
-      if(entry.state!=="active" || now<entry.expiresAtMs)continue;
-      entry.state="expired";
-      const snapshot=this.#persistence.latest(entry.matchId);
-      let cancellation={ok:false,error:"no_active_session"};
-      if(snapshot && !snapshot.terminal && snapshot.serverId===entry.serverId) {
-        // Only the captured, host-authorized dedicated-session capability may
-        // close the objective round. No client score/award path is involved.
-        cancellation=entry.session.closeRound(entry.matchId,
-          "lease-expiry-"+entry.id);
+      if(entry.state==="closed" ||
+         (entry.state==="active" && now<entry.expiresAtMs))continue;
+      // The expired lease NEVER becomes active again, even if the server
+      // identity is temporarily revoked and later reauthorized.
+      const wasPending=entry.state==="cleanup-pending";
+      entry.state="cleanup-pending";
+      const id=entry.matchId;
+      const snapshot=this.#persistence.latest(id);
+      if(!snapshot){
+        outcomes.push({matchId:id,closed:false,reason:"no_active_session"});
+        continue;
       }
-      outcomes.push({
-        matchId:entry.matchId,closed:cancellation.ok===true,
-        reason:cancellation.ok?"cancelled":cancellation.error
-      });
+      if(snapshot.serverId!==entry.serverId){
+        // Do not cancel a match that has since been reassigned.
+        outcomes.push({matchId:id,closed:false,reason:"server_reassigned"});
+        continue;
+      }
+      if(snapshot.terminal){
+        entry.state="closed";
+        outcomes.push({matchId:id,closed:true,reason:"already_terminal"});
+        continue;
+      }
+      if(wasPending){
+        // On a previous sweep the authoritative close may have succeeded
+        // while its fenced session checkpoint failed. Reconcile only that
+        // checkpoint, never repeat the scoring or the terminal event.
+        const repaired=entry.session.reconcileCheckpoint(id);
+        if(repaired.ok && repaired.sessionSnapshot?.terminal){
+          entry.state="closed";
+          outcomes.push({matchId:id,closed:true,reason:"terminal_reconciled"});
+          continue;
+        }
+        if(!repaired.ok && repaired.error!=="no_pending_objective_checkpoint"){
+          outcomes.push({matchId:id,closed:false,reason:repaired.error});
+          continue;
+        }
+      }
+      const closed=entry.session.closeRound(id,"lease-expiry-"+entry.id);
+      if(closed.ok){
+        entry.state="closed";
+        outcomes.push({matchId:id,closed:true,reason:"cancelled"});
+      }else {
+        // A failed terminal checkpoint remains in the bridge pending ledger.
+        // Next sweep will reconcile it; other failures stay visible to ops.
+        outcomes.push({matchId:id,closed:false,reason:closed.error});
+      }
     }
     return {ok:true,outcomes};
   }
 
   diagnostics() {
-    let active=0,expired=0;
+    let active=0,expired=0,pendingCleanup=0,completedCleanup=0;
+    const now=this.#now();
     for(const entry of this.#leases.values()){
-      if(entry.state==="active" && this.#now()<entry.expiresAtMs)active++;
-      else expired++;
+      if(entry.state==="closed"){
+        completedCleanup++;
+        expired++;
+      }else if(entry.state==="cleanup-pending"){
+        pendingCleanup++;
+        expired++;
+      }else if(now>=entry.expiresAtMs){
+        pendingCleanup++;
+        expired++;
+      }else active++;
     }
     return Object.freeze({registered:this.#leases.size,active,expired,
-      maxMatches:this.#maxMatches});
+      pendingCleanup,completedCleanup,maxMatches:this.#maxMatches});
   }
 }
