@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "providerRole": "external-identity-provider",
+  "flow": "authorization-code-with-pkce",
+  "steps": [
+    "launch-system-browser",
+    "receive-authorization-callback",
+    "validate-signature-issuer-audience-expiry",
+    "link-stable-subject-to-tfm-profile",
+    "issue-short-lived-tfm-session",
+    "honor-revocation-and-recovery"
+  ],
+  "clientRules": [
+    "no-passwords-in-unity-client",
+    "no-long-lived-signing-secrets-in-unity-client",
+    "use-os-protected-token-storage",
+    "use-narrow-scopes",
+    "use-tls-in-production"
+  ],
+  "productionBoundary": "Cryptographic OIDC validation and real BazID connectivity are not implemented in the starter backend."
+}

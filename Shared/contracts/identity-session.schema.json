@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/identity-session.schema.json",
+  "title": "TFM Identity Session",
+  "type": "object",
+  "required": ["sessionId", "playerId", "expiresAt", "revoked"],
+  "properties": {
+    "sessionId": { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "revoked": { "type": "boolean" }
+  }
+}

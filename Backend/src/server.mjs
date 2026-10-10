@@ -70,6 +70,11 @@ import { ContentEntitlementService } from "./services/content-entitlements.mjs";
 import { DedicatedSessionCoordinator } from "./services/dedicated-session-coordinator.mjs";
 import { AuthoritativeRecoveryService } from "./services/authoritative-recovery.mjs";
 import { TelemetryGateService } from "./services/telemetry-gates.mjs";
+import { handleIdentity } from "./routes/identity.mjs";
+import { bazIdAuthBoundary } from "./identity-contracts.mjs";
+import { IdentityAuditService } from "./services/identity-audit.mjs";
+import { IdentityBoundaryService } from "./services/identity-boundary.mjs";
+import { DataDeletionRequestService } from "./services/data-deletion-requests.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -122,6 +127,9 @@ export function makeServer() {
   const releaseReadiness = new ReleaseReadinessService();
   const entitlements = new ContentEntitlementService(contentPackCatalog);
   const telemetryGates = new TelemetryGateService(productionTelemetryGates);
+  const identityAudit = new IdentityAuditService();
+  const identityBoundary = new IdentityBoundaryService({ sessions, audit: identityAudit });
+  const deletionRequests = new DataDeletionRequestService();
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
@@ -207,6 +215,9 @@ export function makeServer() {
         dedicatedSessionAllocation: "local-authoritative-orchestration-prototype",
         authoritativeRecovery: "local-snapshot-bound-prototype",
         productionTelemetryGates: "development-threshold-evaluation",
+        identityBoundary: "external-provider-development-boundary",
+        identityAudit: "local-audit-prototype",
+        dataDeletionRequests: "local-workflow-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -289,6 +300,12 @@ export function makeServer() {
       recovery: authoritativeRecovery,
       telemetry: telemetryGates,
       contracts: { telemetry: productionTelemetryGates },
+    })) return;
+    if (await handleIdentity(request, response, path, {
+      identity: identityBoundary,
+      audit: identityAudit,
+      deletions: deletionRequests,
+      contract: bazIdAuthBoundary,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
