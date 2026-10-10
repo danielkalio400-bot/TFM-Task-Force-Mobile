@@ -163,6 +163,39 @@ export class ObjectiveServerLeaseMonitor {
       if(closed.ok){
         entry.state="closed";
         outcomes.push({matchId:id,closed:true,reason:"cancelled"});
+      }else if(closed.error==="objective_round_not_found") {
+        // An assignment can expire before its first objective round opens.
+        // There is no scoreboard or event to close, but the connecting
+        // session still needs a terminal checkpoint. Do not synthesize a
+        // fictitious gameplay event; fence only the assigned session.
+        const verified=this.#bridge.createServerSession({
+          serverId:entry.serverId,principal:entry.principal});
+        if(!verified.ok){
+          outcomes.push({matchId:id,closed:false,
+            reason:"dedicated_server_identity_revoked"});
+          continue;
+        }
+        if(typeof this.#persistence.saveIfCurrent!=="function"){
+          outcomes.push({matchId:id,closed:false,
+            reason:"fenced_session_store_required"});
+          continue;
+        }
+        const saved=this.#persistence.saveIfCurrent({
+          matchId:id,sectionId:snapshot.sectionId,modeId:snapshot.modeId,
+          mapId:snapshot.mapId,region:snapshot.region,
+          serverId:entry.serverId,runtimePhase:"cancelled",terminal:true
+        },{
+          expectedSequence:snapshot.sequence,
+          expectedServerId:entry.serverId,
+          expectedMapId:snapshot.mapId
+        });
+        if(saved.ok){
+          entry.state="closed";
+          outcomes.push({matchId:id,closed:true,
+            reason:"unused_assignment_cancelled"});
+        } else {
+          outcomes.push({matchId:id,closed:false,reason:saved.error});
+        }
       }else {
         // A failed terminal checkpoint remains in the bridge pending ledger.
         // Next sweep will reconcile it; other failures stay visible to ops.

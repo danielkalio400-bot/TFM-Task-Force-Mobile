@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "bulk": 46,
+  "kind": "dedicated server allocation expiry without a started objective round",
+  "control": "An expired verified lease for a still-owned allocated match saves a terminal cancelled checkpoint with session sequence fencing",
+  "requires": [
+    "server identity reverified",
+    "matching existing server and map",
+    "unexpired original registration only for initial allocation",
+    "no objective round opened",
+    "valid compare-and-set store"
+  ],
+  "result": "failed saves retry on later sweep; no invented round/score event",
+  "failureModes": [
+    "reassignment is not cancelled",
+    "revoked server cannot finalize",
+    "temporary persistence errors remain pending"
+  ],
+  "limitations": [
+    "local in-memory authority and session store",
+    "not an external production orchestrator",
+    "no cross-process durable outbox",
+    "no compiled dedicated server"
+  ]
+}
