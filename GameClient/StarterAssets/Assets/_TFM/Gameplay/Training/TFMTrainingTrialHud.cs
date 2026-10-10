@@ -31,7 +31,7 @@ namespace TFM.Gameplay.Training
 
             Rect safe = Screen.safeArea;
             float width = Mathf.Min(320f, safe.width - 20f);
-            float height = trial.Phase == TFMTrainingTrialPhase.Running ? 142f : 166f;
+            float height = trial.Phase == TFMTrainingTrialPhase.Running ? 176f : 190f;
             // Above the right-side touch actions and below device status bar.
             Rect panel = new Rect(safe.center.x - width * 0.5f,
                 safe.yMin + (Application.isMobilePlatform ? 8f : 14f), width, height);
@@ -45,23 +45,27 @@ namespace TFM.Gameplay.Training
                 : "STATE  " + trial.Phase.ToString().ToUpperInvariant();
             GUI.Label(new Rect(panel.x + 10f, panel.y + 40f, width - 20f, 28f),
                 headline, _details);
-            GUI.Label(new Rect(panel.x + 10f, panel.y + 65f, width - 20f, 32f),
-                "Shots " + trial.ShotsFired + "  |  Hits " + trial.ShotsHit +
-                "  |  Accuracy " + Mathf.RoundToInt(trial.Accuracy * 100f) + "%", _details);
+            GUI.Label(new Rect(panel.x + 10f, panel.y + 63f, width - 20f, 28f),
+                "Shots " + trial.ShotsFired + " | Hits " + trial.ShotsHit +
+                " | Misses " + trial.ShotsMissed +
+                " | Accuracy " + Mathf.RoundToInt(trial.Accuracy * 100f) + "%", _details);
+            GUI.Label(new Rect(panel.x + 10f, panel.y + 90f, width - 20f, 25f),
+                "Hit streak " + trial.CurrentHitStreak + " | Longest " +
+                trial.LongestHitStreak, _details);
 
             if (trial.Phase == TFMTrainingTrialPhase.Running)
             {
-                if (GUI.Button(new Rect(panel.x + width * 0.25f, panel.y + 101f,
-                    width * 0.5f, 36f), "End trial"))
+                if (GUI.Button(new Rect(panel.x + width * 0.25f, panel.y + 130f,
+                    width * 0.5f, 40f), "End trial"))
                     trial.Cancel();
             }
             else
             {
-                GUI.Label(new Rect(panel.x + 10f, panel.y + 99f, width - 20f, 24f),
-                    "Score " + trial.Score + "  |  Local best " + trial.LocalBestScore,
-                    _details);
+                GUI.Label(new Rect(panel.x + 10f, panel.y + 112f, width - 20f, 25f),
+                    "Score " + trial.Score + " | Best " + trial.LocalBestScore +
+                    " | Practice " + trial.PracticeMedal, _details);
                 if (GUI.Button(new Rect(panel.x + width * 0.22f,
-                    panel.y + 126f, width * 0.56f, 36f), "Start / retry"))
+                    panel.y + 143f, width * 0.56f, 40f), "Start / retry"))
                     trial.Begin();
             }
         }

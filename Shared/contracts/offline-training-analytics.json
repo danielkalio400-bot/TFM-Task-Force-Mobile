@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "bulk": 47,
+  "scope": "offline training yard shooting drill feedback",
+  "observations": [
+    "shots fired",
+    "valid hits",
+    "misses",
+    "current hit streak",
+    "longest hit streak",
+    "cleared targets",
+    "completion accuracy"
+  ],
+  "medals": {
+    "Gold": "complete, accuracy >= 90%, longest valid-hit streak >= target count",
+    "Silver": "complete, accuracy >= 70%",
+    "Bronze": "complete with lower accuracy",
+    "None": "not completed"
+  },
+  "trust": "Unity-only local simulated dummy hits; never authoritative anti-cheat or combat awards",
+  "rewards": {
+    "ranked": false,
+    "experience": false,
+    "onlineInventory": false,
+    "leaderboard": false
+  },
+  "compatibility": "Existing local best score formula and PlayerPrefs key unchanged",
+  "platforms": [
+    "Android",
+    "iOS",
+    "Windows"
+  ],
+  "status": "source and Node tests only, Unity build not validated"
+}

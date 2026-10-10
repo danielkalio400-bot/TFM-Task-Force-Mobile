@@ -21,6 +21,9 @@ namespace TFM.Gameplay.Training
         public TFMTrainingTrialPhase Phase { get; private set; } = TFMTrainingTrialPhase.Ready;
         public int ShotsFired { get; private set; }
         public int ShotsHit { get; private set; }
+        public int ShotsMissed { get; private set; }
+        public int CurrentHitStreak { get; private set; }
+        public int LongestHitStreak { get; private set; }
         public int TargetsCleared { get; private set; }
         public int TotalTargets { get { return _targets.Count; } }
         public int RemainingTargets { get { return _remaining.Count; } }
@@ -28,6 +31,18 @@ namespace TFM.Gameplay.Training
         public int Score { get; private set; }
         public int LocalBestScore { get { return PlayerPrefs.GetInt(LocalBestKey, 0); } }
         public float Accuracy { get { return ShotsFired > 0 ? (float)ShotsHit / ShotsFired : 0f; } }
+        // Entirely local feedback: no ranked tier or online reward granted.
+        public string PracticeMedal
+        {
+            get
+            {
+                if (Phase != TFMTrainingTrialPhase.Completed) return "None";
+                if (Accuracy >= 0.9f && LongestHitStreak >= TotalTargets)
+                    return "Gold";
+                if (Accuracy >= 0.7f) return "Silver";
+                return "Bronze";
+            }
+        }
 
         public event Action<TFMTrainingTrialPhase> PhaseChanged;
 
@@ -55,7 +70,9 @@ namespace TFM.Gameplay.Training
             TFMObjectiveRound route = GetComponent<TFMObjectiveRound>();
             if (route != null) route.Cancel();
             _elapsed = 0f;
-            ShotsFired = ShotsHit = TargetsCleared = Score = 0;
+            ShotsFired = ShotsHit = ShotsMissed = 0;
+            CurrentHitStreak = LongestHitStreak = 0;
+            TargetsCleared = Score = 0;
             _remaining.Clear();
             foreach (TFMTargetDummy target in _targets)
             {
@@ -86,15 +103,25 @@ namespace TFM.Gameplay.Training
         {
             if (Phase != TFMTrainingTrialPhase.Running || _paused) return;
             ShotsFired++;
-            if (result.Hit && _remaining.Contains(result.Target))
+            // A respawned or already-cleared dummy does not count as a new
+            // training hit. Only the original outstanding targets are valid.
+            if (result.Hit && result.Target != null &&
+                _remaining.Contains(result.Target))
             {
                 ShotsHit++;
+                CurrentHitStreak++;
+                LongestHitStreak = Mathf.Max(LongestHitStreak, CurrentHitStreak);
                 if (result.TargetCleared && _remaining.Remove(result.Target))
                 {
                     TargetsCleared++;
                     if (_remaining.Count == 0)
                         Finish(TFMTrainingTrialPhase.Completed);
                 }
+            }
+            else
+            {
+                ShotsMissed++;
+                CurrentHitStreak = 0;
             }
         }
 
