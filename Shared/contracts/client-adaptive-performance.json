@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "bulk": 30,
+  "platforms": [
+    "Android",
+    "iOS",
+    "Windows"
+  ],
+  "engine": "Unity 6 + URP",
+  "targetFps": {
+    "floor": 30,
+    "ceiling": "highest measured stable refresh divisor; no artificial maximum"
+  },
+  "policy": {
+    "samplingFrames": 120,
+    "slowFrameThresholdRatio": 1.25,
+    "slowFrameFractionLimit": 0.12,
+    "windowsBeforeUpshift": 3,
+    "cooldownWindows": 2,
+    "firstResponse": "lower resolution scale",
+    "secondResponse": "lower refresh-compatible FPS target",
+    "presets": [
+      "BatterySaver",
+      "Balanced",
+      "Performance",
+      "Adaptive"
+    ],
+    "initialMobile": "30 FPS adaptive probe",
+    "initialPC": "60 FPS adaptive probe"
+  },
+  "inputs": [
+    "touch",
+    "gyro-optional",
+    "keyboard-mouse",
+    "controller"
+  ],
+  "limits": [
+    "device dependent",
+    "runtime adaptive quality is not device certification",
+    "no Unity builds or device tests performed by Node CI",
+    "local demo only",
+    "no gameplay server authority"
+  ],
+  "dataBoundary": "Performance samples never authorize score, matchmaking, ranks, economy, or match results."
+}

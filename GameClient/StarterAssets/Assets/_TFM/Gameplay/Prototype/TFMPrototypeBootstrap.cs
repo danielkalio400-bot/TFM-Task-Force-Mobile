@@ -4,6 +4,7 @@ using TFM.Player.Camera;
 using TFM.Player.Controls;
 using TFM.Player.Movement;
 using TFM.UI.HUD;
+using TFM.Performance;
 using UnityEngine;
 
 namespace TFM.Gameplay.Prototype
@@ -26,6 +27,15 @@ namespace TFM.Gameplay.Prototype
         private void Awake()
         {
             BuildScene();
+            if (Application.isPlaying)
+            {
+                // Works with already-generated saved scenes: never overwrite
+                // locally edited geometry just to install the new controller.
+                if (GetComponent<TFMAdaptiveFramePacer>() == null)
+                    gameObject.AddComponent<TFMAdaptiveFramePacer>();
+                if (GetComponent<TFMPerformancePanel>() == null)
+                    gameObject.AddComponent<TFMPerformancePanel>();
+            }
         }
 
         // Also called by the Editor builder. Serialized references keep the saved scene playable.

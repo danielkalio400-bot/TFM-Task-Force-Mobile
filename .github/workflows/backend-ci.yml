@@ -5,11 +5,15 @@ on:
     paths:
       - "Backend/**"
       - "Shared/contracts/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Performance/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Prototype/TFMPrototypeBootstrap.cs"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
       - "Backend/**"
       - "Shared/contracts/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Performance/**"
+      - "GameClient/StarterAssets/Assets/_TFM/Gameplay/Prototype/TFMPrototypeBootstrap.cs"
       - ".github/workflows/backend-ci.yml"
 
 permissions:
