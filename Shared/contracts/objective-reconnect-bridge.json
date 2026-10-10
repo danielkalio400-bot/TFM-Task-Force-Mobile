@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "bulk": 34,
+  "scope": "in-process dedicated objective round integration",
+  "transports": [
+    "future authenticated game transport (not yet implemented)"
+  ],
+  "dependentServices": [
+    "ServerObjectiveRoundsService",
+    "ServerAssignmentService",
+    "SessionPersistenceService"
+  ],
+  "joinRequirements": [
+    "assigned match and server",
+    "unexpired assignment credential",
+    "injected authenticated player subject validator",
+    "member of original server-side player roster",
+    "nonterminal session snapshot"
+  ],
+  "reconnect": {
+    "tokenBits": 256,
+    "storedAs": "sha256 hash",
+    "oneTimeUse": true,
+    "defaultTtlSeconds": 90,
+    "challenge": "requires independently validated subject",
+    "gapDetection": "full snapshot required when event retention window skipped"
+  },
+  "authoritativeChanges": [
+    "synchronize runtime phase and terminal flag in existing session persistence",
+    "never write progression, inventory or ranking",
+    "never accept HTTP score mutation"
+  ],
+  "productionCaveat": "No real BazID identity verification, Unity network transport, database transaction, signed dedicated-server process, or device build is delivered. The validator must be provided by production authentication."
+}

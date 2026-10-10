@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { ServerObjectiveRoundsService } from "./services/server-objective-rounds.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
 import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
+import { objectiveReconnectContract } from "./objective-reconnect-contracts.mjs";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -279,6 +280,7 @@ export function makeServer() {
         identity: "dev-validated-subject-placeholder",
         bazidOidc: "not-connected",
         multiplayerTransport: "not-implemented",
+        objectiveReconnect: "in-process-bridge-not-networked",
         matchmaking: "local-in-memory-prototype",
         lobbies: "local-in-memory-prototype",
         progression: "local-in-memory-prototype",
@@ -501,6 +503,8 @@ export function makeServer() {
       rounds: serverObjectiveRounds,
       contract: serverObjectiveRoundsContract,
     })) return;
+    if (request.method === "GET" && path === "/v1/runtime/objective-reconnect-bridge")
+      return sendJson(response, 200, objectiveReconnectContract);
 
     return sendJson(response, 404, { error: "not_found" });
   });

@@ -37,7 +37,8 @@ export class ServerObjectiveRoundsService {
         begin: (roundId, requestId) => this.#begin(serverId, roundId, requestId),
         capture: (roundId, input) => this.#capture(serverId, roundId, input),
         close: (roundId, requestId) => this.#close(serverId, roundId, requestId, "cancelled"),
-        advanceClock: roundId => this.#tick(serverId, roundId)
+        advanceClock: roundId => this.#tick(serverId, roundId),
+        roster: matchId => this.#roster(serverId, matchId)
       })
     };
   }
@@ -78,6 +79,15 @@ export class ServerObjectiveRoundsService {
     this.#rounds.set(matchId, state);
     this.#append(state, "round-created", { objectiveCount: objectiveIds.length });
     return { ok:true, snapshot:this.#snapshot(state) };
+  }
+
+  // Only an existing trusted adapter can request match membership. No
+  // public HTTP route exports player rosters or join credentials.
+  #roster(serverId, matchId) {
+    const owned=this.#getOwned(serverId,matchId);
+    if(!owned.ok)return owned;
+    return {ok:true,matchId,serverId,players:clone(owned.round.players),
+      phase:owned.round.phase};
   }
 
   #getOwned(serverId, matchId) {
