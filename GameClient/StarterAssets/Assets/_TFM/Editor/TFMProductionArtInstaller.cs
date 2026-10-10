@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TFM.Gameplay.Combat;
 using TFM.Player.Movement;
@@ -15,6 +16,13 @@ namespace TFM.Editor
     public static class TFMProductionArtInstaller
     {
         private const string ScenePath = TFMTrainingSceneBuilder.ScenePath;
+        private static readonly HashSet<string> OriginalArenaBlocks =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "Ground", "North Wall", "South Wall", "East Wall", "West Wall",
+                "Center Cover", "West Cover", "East Cover", "North Platform",
+                "South Platform", "Center Marker"
+            };
 
         [MenuItem("TFM/Production Art/Apply Imported Prefabs")]
         public static void Apply()
@@ -48,15 +56,16 @@ namespace TFM.Editor
             if (motion == null) motion = Undo.AddComponent<TFMOperatorMotionBridge>(avatar);
             Undo.RecordObject(motion, "Bind TFM operator motion");
             motion.Configure(players[0].transform);
+            // The gameplay motor is authoritative. Imported avatar colliders must not
+            // occlude the camera's ray cast or intercept shots fired from the camera.
+            SetOperatorRaycastLayer(avatar);
             HideLegacy(players[0].transform.Find("Player Visual"));
 
             PlacePrefab(profile.EnvironmentPrefab, arena, "TFM Production Environment");
             foreach (Transform child in arena)
             {
-                if (child.name == "TFM Production Environment" ||
-                    child.GetComponent<TFMTargetDummy>() != null)
-                    continue;
-                HideLegacy(child);
+                if (OriginalArenaBlocks.Contains(child.name))
+                    HideLegacy(child);
             }
 
             foreach (TFMTargetDummy target in targets)
@@ -93,14 +102,25 @@ namespace TFM.Editor
                 VerifyInstalled(target.transform.Find("TFM Production Practice Target"),
                     profile.PracticeTargetPrefab, "practice target", true, false);
 
-            if (players[0].transform.Find("Player Visual")?.gameObject.activeSelf == true ||
+            if (LegacyRendererVisible(players[0].transform.Find("Player Visual")) ||
                 targets.Any(target =>
-                    target.transform.Find("Body")?.gameObject.activeSelf == true ||
-                    target.transform.Find("Head")?.gameObject.activeSelf == true))
+                    LegacyRendererVisible(target.transform.Find("Body")) ||
+                    LegacyRendererVisible(target.transform.Find("Head"))) ||
+                Find<Transform>(scene).Any(part =>
+                    part.parent == arena && OriginalArenaBlocks.Contains(part.name) &&
+                    LegacyRendererVisible(part)))
                 throw new InvalidOperationException(
-                    "Original player or practice-target blockout visuals are still active.");
+                    "Original training-yard blockout mesh is still rendered.");
 
-            Debug.Log("TFM imported art instances, visible meshes, humanoid controller and physical colliders validated. Human review and hardware profiling remain required.");
+            Transform operatorVisual = players[0].transform.Find("TFM Production Operator");
+            int raycastExclusion = LayerMask.NameToLayer("Ignore Raycast");
+            if (raycastExclusion < 0 || operatorVisual == null ||
+                operatorVisual.GetComponentsInChildren<Transform>(true)
+                    .Any(part => part.gameObject.layer != raycastExclusion))
+                throw new InvalidOperationException(
+                    "Operator geometry must be on the Ignore Raycast layer to avoid self-occlusion.");
+
+            Debug.Log("TFM production art, preserved gameplay anchors, collision and camera raycast exclusions verified. Manual visual/device QA remains required.");
         }
 
         // Audit the installed prefab instance rather than an unrelated renamed object.
@@ -180,11 +200,43 @@ namespace TFM.Editor
             return instance;
         }
 
+        private static bool LegacyRendererVisible(Transform legacy)
+        {
+            if (legacy == null || !legacy.gameObject.activeInHierarchy) return false;
+            Renderer renderer = legacy.GetComponent<Renderer>();
+            return renderer != null && renderer.enabled;
+        }
+
+        private static void SetOperatorRaycastLayer(GameObject avatar)
+        {
+            int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+            if (ignoreRaycastLayer < 0)
+                throw new InvalidOperationException("Unity Ignore Raycast layer is missing.");
+            foreach (Transform part in avatar.GetComponentsInChildren<Transform>(true))
+            {
+                if (part.gameObject.layer == ignoreRaycastLayer) continue;
+                Undo.RecordObject(part.gameObject, "Exclude operator visual from aiming");
+                part.gameObject.layer = ignoreRaycastLayer;
+            }
+        }
+
         private static void HideLegacy(Transform legacy)
         {
-            if (legacy == null || !legacy.gameObject.activeSelf) return;
-            Undo.RecordObject(legacy.gameObject, "Hide TFM legacy visuals");
-            legacy.gameObject.SetActive(false);
+            if (legacy == null) return;
+            // Never deactivate scene anchors; other gameplay components and authored
+            // child objects must remain active after the production mesh is installed.
+            Renderer renderer = legacy.GetComponent<Renderer>();
+            if (renderer != null && renderer.enabled)
+            {
+                Undo.RecordObject(renderer, "Hide TFM legacy renderer");
+                renderer.enabled = false;
+            }
+            Collider collider = legacy.GetComponent<Collider>();
+            if (collider != null && collider.enabled)
+            {
+                Undo.RecordObject(collider, "Replace TFM legacy collision");
+                collider.enabled = false;
+            }
         }
     }
 }

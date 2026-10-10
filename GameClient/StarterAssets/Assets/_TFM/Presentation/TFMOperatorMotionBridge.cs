@@ -35,6 +35,10 @@ namespace TFM.Presentation
             {
                 Animator animator = _animators[index];
                 if (animator == null) continue;
+                // CharacterController owns movement; authored clips provide visuals.
+                // Applying imported root motion would drift the visual away from
+                // the authoritative player position and compromise hit alignment.
+                animator.applyRootMotion = false;
                 foreach (AnimatorControllerParameter parameter in animator.parameters)
                 {
                     if (parameter.nameHash == SpeedId &&
