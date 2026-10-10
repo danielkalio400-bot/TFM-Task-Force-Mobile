@@ -6,9 +6,9 @@ test("SSE download callback queues frames and Unity-only APIs run on main thread
  assert.match(src,/DownloadHandlerScript/);
  // Download callback must carry the connection generation so a late
  // callback from a prior request cannot corrupt a new stream.
- assert.match(src,/new EventDownload\\(/);
- assert.match(src,/frame => QueueFrame\\(epoch, frame\\)/);
- assert.match(src,/if \\(epoch != _streamEpoch\\) return/);
+ assert.match(src,/new EventDownload\(/);
+ assert.match(src,/frame => QueueFrame\(epoch, frame\)/);
+ assert.match(src,/if \(epoch != _streamEpoch\) return/);
  assert.match(src,/private void QueueFrame/);
  assert.match(src,/lock \(_frameLock\)/);
  assert.match(src,/private void Update\(\) \{ FlushFrames\(\); \}/);
