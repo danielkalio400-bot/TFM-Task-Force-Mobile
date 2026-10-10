@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "systems": [
+    "server-validated-progression-grants",
+    "idempotent-grant-receipts",
+    "progression-audit-history",
+    "level-based-unlocks",
+    "progression-leaderboard-snapshots"
+  ],
+  "trustedSourceTypes": [
+    "validated-match-result",
+    "migration"
+  ],
+  "unlockRules": [
+    { "unlockId": "loadout-slot-2", "requiredLevel": 3 },
+    { "unlockId": "loadout-slot-3", "requiredLevel": 8 },
+    { "unlockId": "ranked-access", "requiredLevel": 10 },
+    { "unlockId": "advanced-training", "requiredLevel": 15 }
+  ],
+  "rule": "Progression grants must originate from trusted server-side sources and must be idempotent. Leaderboards expose game progression only, never BazID subject references or credentials."
+}

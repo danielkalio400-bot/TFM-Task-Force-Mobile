@@ -88,6 +88,12 @@ import { ModerationSanctionService } from "./services/moderation-sanctions.mjs";
 import { ConsentSettingsService } from "./services/consent-settings.mjs";
 import { NotificationPreferenceService } from "./services/notification-preferences.mjs";
 import { SocialSafetyPolicyService } from "./services/social-safety-policy.mjs";
+import { handleProgressionAuthority } from "./routes/progression-authority.mjs";
+import { progressionAuthorityRuntime } from "./progression-authority-contracts.mjs";
+import { ProgressionAuditService } from "./services/progression-audit.mjs";
+import { ProgressionUnlockService } from "./services/progression-unlocks.mjs";
+import { ProgressionLeaderboardService } from "./services/progression-leaderboard.mjs";
+import { ProgressionAuthorityService } from "./services/progression-authority.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -151,6 +157,16 @@ export function makeServer() {
   const moderationSanctions = new ModerationSanctionService();
   const consentSettings = new ConsentSettingsService();
   const notificationPreferences = new NotificationPreferenceService();
+  const progressionAudit = new ProgressionAuditService();
+  const progressionUnlocks = new ProgressionUnlockService(progressionAuthorityRuntime.unlockRules);
+  const progressionLeaderboard = new ProgressionLeaderboardService();
+  const progressionAuthority = new ProgressionAuthorityService({
+    profiles,
+    audit: progressionAudit,
+    unlocks: progressionUnlocks,
+    leaderboard: progressionLeaderboard,
+    contract: progressionAuthorityRuntime,
+  });
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -249,6 +265,9 @@ export function makeServer() {
         socialPrivacy: "local-policy-prototype",
         socialSafety: "local-consent-rate-limit-prototype",
         moderationSanctions: "local-policy-state-prototype",
+        progressionAuthority: "local-trusted-source-prototype",
+        progressionAudit: "local-audit-history-prototype",
+        progressionLeaderboard: "local-snapshot-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -351,6 +370,13 @@ export function makeServer() {
       notifications: notificationPreferences,
       policy: socialSafetyPolicy,
       contract: socialSafetyRuntime,
+    })) return;
+    if (await handleProgressionAuthority(request, response, path, {
+      authority: progressionAuthority,
+      audit: progressionAudit,
+      unlocks: progressionUnlocks,
+      leaderboard: progressionLeaderboard,
+      contract: progressionAuthorityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
