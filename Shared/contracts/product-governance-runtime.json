@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "systems": [
+    "risk-register",
+    "vertical-slice-gate",
+    "physical-device-validation",
+    "capacity-pilot-evidence",
+    "credential-handling-evidence",
+    "asset-provenance",
+    "player-safety-evidence",
+    "maturity-label-governance"
+  ],
+  "riskCategories": [
+    "scope-inflation",
+    "mobile-device-diversity",
+    "server-costs-complexity",
+    "credential-leakage",
+    "content-originality",
+    "harassment-safety",
+    "overpromising-implementation"
+  ],
+  "maturityStages": [
+    "scaffold",
+    "prototype",
+    "internal-beta",
+    "release-ready"
+  ],
+  "releaseReadyRequirements": [
+    "vertical-slice",
+    "physical-device-validation",
+    "capacity-pilot",
+    "credential-security",
+    "asset-provenance",
+    "player-safety",
+    "platform-compliance",
+    "rollback-readiness"
+  ],
+  "rule": "TFM must distinguish scaffold, prototype, internal beta and release-ready states. Originality evidence is required and protected CODM content must not be copied.",
+  "productionBoundary": "This is internal product-governance state. Evidence references do not replace legal review, security testing, platform certification, physical-device QA, or production operations."
+}
