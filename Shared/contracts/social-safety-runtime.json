@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "systems": [
+    "rate-limits",
+    "anti-spam-review",
+    "moderation-sanctions",
+    "social-restrictions",
+    "consent-settings",
+    "notification-preferences",
+    "security-notifications",
+    "moderation-notifications",
+    "audit-friendly-actions"
+  ],
+  "defaultRateLimits": {
+    "friend-request": { "limit": 20, "windowSeconds": 3600 },
+    "clan-invite": { "limit": 30, "windowSeconds": 3600 },
+    "party-invite": { "limit": 60, "windowSeconds": 3600 },
+    "player-report": { "limit": 20, "windowSeconds": 3600 }
+  },
+  "rule": "Rate limits, blocks, privacy, consent and active moderation sanctions must be evaluated before social actions are accepted.",
+  "productionBoundary": "Limits are development defaults and must be tuned using abuse, privacy and age-appropriate safety review."
+}

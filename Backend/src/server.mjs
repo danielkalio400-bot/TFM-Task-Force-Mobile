@@ -81,6 +81,13 @@ import { FriendsService } from "./services/friends.mjs";
 import { PrivacyService } from "./services/privacy.mjs";
 import { ClanService } from "./services/clans.mjs";
 import { SocialPolicyService } from "./services/social-policy.mjs";
+import { handleSocialSafety } from "./routes/social-safety.mjs";
+import { socialSafetyRuntime } from "./social-safety-contracts.mjs";
+import { ActionRateLimitService } from "./services/action-rate-limits.mjs";
+import { ModerationSanctionService } from "./services/moderation-sanctions.mjs";
+import { ConsentSettingsService } from "./services/consent-settings.mjs";
+import { NotificationPreferenceService } from "./services/notification-preferences.mjs";
+import { SocialSafetyPolicyService } from "./services/social-safety-policy.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -140,6 +147,15 @@ export function makeServer() {
   const privacy = new PrivacyService();
   const clans = new ClanService();
   const socialPolicy = new SocialPolicyService({ friends, clans, privacy });
+  const socialRateLimits = new ActionRateLimitService(socialSafetyRuntime.defaultRateLimits);
+  const moderationSanctions = new ModerationSanctionService();
+  const consentSettings = new ConsentSettingsService();
+  const notificationPreferences = new NotificationPreferenceService();
+  const socialSafetyPolicy = new SocialSafetyPolicyService({
+    sanctions: moderationSanctions,
+    consent: consentSettings,
+    rateLimits: socialRateLimits,
+  });
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
@@ -231,6 +247,8 @@ export function makeServer() {
         socialGraph: "local-privacy-aware-prototype",
         clans: "local-role-based-prototype",
         socialPrivacy: "local-policy-prototype",
+        socialSafety: "local-consent-rate-limit-prototype",
+        moderationSanctions: "local-policy-state-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -326,6 +344,13 @@ export function makeServer() {
       clans,
       policy: socialPolicy,
       contract: socialPrivacyRuntime,
+    })) return;
+    if (await handleSocialSafety(request, response, path, {
+      sanctions: moderationSanctions,
+      consent: consentSettings,
+      notifications: notificationPreferences,
+      policy: socialSafetyPolicy,
+      contract: socialSafetyRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
