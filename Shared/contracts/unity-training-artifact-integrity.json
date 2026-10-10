@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "bulk": 51,
+  "subject": "TFM Training Yard",
+  "artifactRules": {
+    "android": [
+      "nonempty ZIP central directory",
+      "AndroidManifest.xml",
+      "classes.dex",
+      "original Unity player data or libunity/libil2cpp/libmain"
+    ],
+    "windows": [
+      "64-bit PE MZ/PE headers",
+      "matching Unity _Data folder",
+      "globalgamemanagers or resources.assets"
+    ],
+    "ios": [
+      "Unity-iPhone.xcodeproj/project.pbxproj with PBXProject marker",
+      "Xcode export, not signed IPA"
+    ]
+  },
+  "projectPrerequisites": [
+    "Assets",
+    "Packages/manifest.json",
+    "ProjectSettings/ProjectVersion.txt",
+    "correct imported prototype source + batch Editor build"
+  ],
+  "receipt": [
+    "format kind",
+    "size bytes for package binaries",
+    "SHA-256 for Android and Windows"
+  ],
+  "limitations": [
+    "structural plausibility does not prove functional runtime",
+    "ZIP fixtures in tests are not compiled apps",
+    "Unity Editor and real builds not present in GitHub CI",
+    "no artificial 30MB archive"
+  ]
+}

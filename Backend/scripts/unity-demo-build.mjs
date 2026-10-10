@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {existsSync,statSync} from "node:fs";
+import {inspectUnityArtifact} from "../src/services/unity-artifact-integrity.mjs";
 import {resolve,join,dirname} from "node:path";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
@@ -36,40 +37,42 @@ export function unityArguments({project,platform,output}){
    "-executeMethod","TFM.Editor.TFMPlayableDemoBatchBuild.Run",
    "-tfmPlatform",platform,"-tfmOutput",output];
 }
-export function verifyDemoArtifact({platform,output}){
- if(platform==="ios")
-   return existsSync(join(output,"Unity-iPhone.xcodeproj"));
- if(!existsSync(output)||!statSync(output).isFile()||
-    statSync(output).size===0)return false;
- if(platform==="windows"){
-   const base=output.slice(0,-4);
-   return existsSync(base+"_Data")&&statSync(base+"_Data").isDirectory();
- }
- return true;
+export function verifyDemoArtifact(request){
+ return inspectUnityArtifact(request).ok;
 }
+
 export function runCli(argv){
  const options=parseOptions(argv);
  if(!existsSync(join(options.project,"Assets"))||
     !existsSync(join(options.project,"ProjectSettings","ProjectVersion.txt")))
    throw new Error("unity_project_missing_assets_or_project_settings");
+ if(!existsSync(join(options.project,"Packages","manifest.json")))
+   throw new Error("unity_packages_manifest_missing");
+ for(const file of ["Gameplay/Prototype/TFMPrototypeBootstrap.cs","Editor/TFMPlayableDemoBatchBuild.cs"])
+   if(!existsSync(join(options.project,"Assets","_TFM",...file.split("/"))))
+     throw new Error("tfm_unity_source_not_imported:"+file);
+ if(existsSync(options.output))
+   throw new Error("output_already_exists_remove_or_choose_a_fresh_path");
  if(options.platform==="ios"&&process.platform!=="darwin")
    throw new Error("ios_export_requires_macos");
- if(!existsSync(options.unity))throw new Error("unity_editor_executable_not_found");
+ if(!existsSync(options.unity)||!statSync(options.unity).isFile())
+   throw new Error("unity_editor_executable_not_found");
  const args=unityArguments(options);
  if(options.dryRun){
    console.log(JSON.stringify({mode:"dry-run",unity:options.unity,args,buildVerified:false},null,2));
    return;
  }
- const previous=verifyDemoArtifact(options);
- if(previous)throw new Error("output_already_exists_remove_or_choose_a_fresh_path");
- const result=spawnSync(options.unity,args,{stdio:"inherit",timeout:3600000});
+  const result=spawnSync(options.unity,args,{stdio:"inherit",timeout:3600000});
  if(result.error)throw result.error;
  if(result.status!==0)
    throw new Error("unity_demo_build_failed_exit_"+result.status);
- if(!verifyDemoArtifact(options))
-   throw new Error("unity_exited_without_verified_demo_artifact");
+ const inspected=inspectUnityArtifact(options);
+ if(!inspected.ok)
+   throw new Error("unity_exited_without_verified_demo_artifact:"+inspected.error);
  console.log(JSON.stringify({platform:options.platform,output:options.output,
-   artifactVerified:true,buildSizeNotPrescribed:true}));
+   artifactVerified:true,buildSizeNotPrescribed:true,
+   verifiedStructure:inspected.kind,sizeBytes:inspected.sizeBytes??null,
+   sha256:inspected.sha256??null}));
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{runCli(process.argv.slice(2));}

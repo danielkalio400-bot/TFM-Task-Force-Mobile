@@ -25,24 +25,18 @@ test("target-specific Unity command lines require an explicit valid output",()=>
  assert.throws(()=>parseOptions(["--unity","x","--project","y",
     "--platform","android","--output","missing.exe"]),/android_output_must_be_apk/);
 });
-test("real output verifier rejects empty files and validates expected Windows data folder",()=>{
- const folder=mkdtempSync(join(tmpdir(),"tfm50-"));
+test("the build command only accepts inspected real-format outputs",()=>{
+ const folder=mkdtempSync(join(tmpdir(),"source-only-"));
  try{
   const apk=join(folder,"demo.apk");
+  writeFileSync(apk,"ordinary text is not an Android game");
   assert.equal(verifyDemoArtifact({platform:"android",output:apk}),false);
-  writeFileSync(apk,"");
-  assert.equal(verifyDemoArtifact({platform:"android",output:apk}),false);
-  writeFileSync(apk,"binary-placeholder-test-only");
-  assert.equal(verifyDemoArtifact({platform:"android",output:apk}),true);
-  const exe=join(folder,"TFM.exe");
-  writeFileSync(exe,"exe-placeholder");
+  const exe=join(folder,"demo.exe");
+  writeFileSync(exe,"text");mkdirSync(join(folder,"demo_Data"));
   assert.equal(verifyDemoArtifact({platform:"windows",output:exe}),false);
-  mkdirSync(join(folder,"TFM_Data"));
-  assert.equal(verifyDemoArtifact({platform:"windows",output:exe}),true);
-  const xcode=join(folder,"iOS");mkdirSync(xcode);
-  assert.equal(verifyDemoArtifact({platform:"ios",output:xcode}),false);
+  const xcode=join(folder,"xcode");mkdirSync(xcode);
   mkdirSync(join(xcode,"Unity-iPhone.xcodeproj"));
-  assert.equal(verifyDemoArtifact({platform:"ios",output:xcode}),true);
+  assert.equal(verifyDemoArtifact({platform:"ios",output:xcode}),false);
  }finally{rmSync(folder,{recursive:true,force:true});}
 });
 test("project readiness fails without real Unity project, never generates fake game files",()=>{
