@@ -13,7 +13,9 @@
 
 Each phase requires testing. Release gates are not bypassed automatically.
 
-Current implementation: phase 1 has started with a runtime-generated 3D
+Current implementation: phase 1 includes a Unity Editor builder for a saved 3D
 training yard, third-person movement, camera collision, target-range combat and
-mobile touch input. It still needs an Editor playtest, saved Unity scene, menu
-and original art pass.
+mobile touch input. The builder validates scene wiring after saving and reloading.
+Editor playtesting on the user's installed Unity version, game menus and an
+original art pass remain outstanding. A Windows demo build command is available
+inside Unity; no standalone executable has been produced in the cloud.

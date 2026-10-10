@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace TFM.Gameplay.Combat
 {
+    [DefaultExecutionOrder(200)]
     public sealed class TFMHitscanWeapon : MonoBehaviour
     {
         [SerializeField, Min(1)] private int magazineSize = 30;
@@ -13,8 +14,8 @@ namespace TFM.Gameplay.Combat
         [SerializeField, Min(1f)] private float range = 120f;
         [SerializeField] private LayerMask hitMask = ~(1 << 2);
 
-        private TFMPlayerInput _input;
-        private Camera _aimCamera;
+        [SerializeField] private TFMPlayerInput _input;
+        [SerializeField] private Camera _aimCamera;
         private float _nextShotTime;
         private float _reloadCompleteTime;
         private float _hitMarkerUntil;
@@ -40,7 +41,7 @@ namespace TFM.Gameplay.Combat
             }
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (_input == null || _aimCamera == null)
             {

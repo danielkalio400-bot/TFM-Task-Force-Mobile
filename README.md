@@ -21,11 +21,16 @@ Mobile remains the primary optimization focus, but Windows PC is a committed rel
    `GameClient/TFM-Unity` (this directory is intentionally NOT pre-created).
 4. After Unity finishes creating the project, run the generated
    `Import-TFM-StarterAssets.ps1` to import the TFM code and folder structure.
-5. Open the default Unity scene and press Play. The starter code builds the
-   training yard and third-person player at runtime.
+5. Wait for compilation. Unity generates a saved training scene on first import.
+   Choose **TFM > Open Training Yard**, then press Play.
 6. Use WASD to move, Left Shift to sprint, Space to jump and hold the right
    mouse button to orbit the camera. Use the left mouse button to fire and R to
    reload. Touch movement, aiming, firing, jumping and reload are enabled on mobile.
+
+For existing projects, `Update-TFM-Unity.ps1 -Root <repository-path> -OpenUnity`
+updates scripts with backups and verifies the installation without requiring Git.
+Use **TFM > Validate Training Scene** to check the saved scene and **TFM > Build
+Windows Training Demo** to create an executable locally.
 
 ## Shared core / platform layers
 The gameplay, networking, progression, weapons, vehicles, maps, AI and game-service logic should stay shared where practical.

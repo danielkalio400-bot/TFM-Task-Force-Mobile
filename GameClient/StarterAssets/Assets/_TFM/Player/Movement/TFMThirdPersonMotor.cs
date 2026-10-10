@@ -14,8 +14,8 @@ namespace TFM.Player.Movement
         [SerializeField] private float gravity = -25f;
 
         private CharacterController _controller;
-        private TFMPlayerInput _input;
-        private Transform _cameraTransform;
+        [SerializeField] private TFMPlayerInput _input;
+        [SerializeField] private Transform _cameraTransform;
         private float _verticalSpeed;
         private float _rotationVelocity;
 

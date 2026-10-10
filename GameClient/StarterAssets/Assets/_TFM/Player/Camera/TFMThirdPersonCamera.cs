@@ -13,11 +13,11 @@ namespace TFM.Player.Camera
         [SerializeField] private Vector2 pitchLimits = new Vector2(-20f, 65f);
         [SerializeField] private LayerMask collisionMask = ~(1 << 2);
 
-        private Transform _target;
-        private TFMPlayerInput _input;
+        [SerializeField] private Transform _target;
+        [SerializeField] private TFMPlayerInput _input;
         private Vector3 _positionVelocity;
         private float _yaw;
-        private float _pitch = 18f;
+        private float _pitch = 5f;
         private bool _snapNextFrame = true;
 
         public void Configure(Transform target, TFMPlayerInput input)
@@ -26,6 +26,7 @@ namespace TFM.Player.Camera
             _input = input;
             _yaw = target.eulerAngles.y;
             _snapNextFrame = true;
+            PositionCamera();
         }
 
         private void LateUpdate()
@@ -44,7 +45,15 @@ namespace TFM.Player.Camera
                     pitchLimits.y);
             }
 
-            Vector3 pivot = _target.position + Vector3.up * targetHeight;
+            PositionCamera();
+        }
+
+        private void PositionCamera()
+        {
+            if (_target == null) return;
+            // Shoulder offset keeps the player clear of the crosshair.
+            Vector3 pivot = _target.position + Vector3.up * targetHeight +
+                            Quaternion.Euler(0f, _yaw, 0f) * Vector3.right * 0.8f;
             Quaternion orbit = Quaternion.Euler(_pitch, _yaw, 0f);
             Vector3 direction = orbit * Vector3.back;
             float safeDistance = distance;

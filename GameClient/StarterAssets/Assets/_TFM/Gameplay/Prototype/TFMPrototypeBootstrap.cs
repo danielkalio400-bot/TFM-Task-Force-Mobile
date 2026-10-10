@@ -13,14 +13,25 @@ namespace TFM.Gameplay.Prototype
     {
         private static readonly Vector3 SpawnPoint = new Vector3(0f, 0.05f, -7f);
         private readonly List<Material> _runtimeMaterials = new List<Material>();
+        [SerializeField] private bool sceneBuilt;
+
+        public bool SceneBuilt => sceneBuilt;
+        public IReadOnlyList<Material> GeneratedMaterials => _runtimeMaterials;
+
+        public void ReleaseGeneratedMaterialOwnership()
+        {
+            _runtimeMaterials.Clear();
+        }
 
         private void Awake()
         {
-            if (Object.FindFirstObjectByType<TFMThirdPersonMotor>() != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
+            BuildScene();
+        }
+
+        // Also called by the Editor builder. Serialized references keep the saved scene playable.
+        public void BuildScene()
+        {
+            if (sceneBuilt) return;
 
             BuildTrainingYard();
             GameObject player = BuildPlayer();
@@ -33,6 +44,7 @@ namespace TFM.Gameplay.Prototype
                 player.GetComponent<TFMPlayerInput>(),
                 player.GetComponent<TFMHitscanWeapon>());
 
+            sceneBuilt = true;
             Debug.Log("TFM 3D training yard ready.");
         }
 
@@ -60,9 +72,9 @@ namespace TFM.Gameplay.Prototype
             CreateBlock(arena.transform, "South Platform", new Vector3(7f, 0.6f, -9f), new Vector3(4f, 1.2f, 4f), cover);
             CreateBlock(arena.transform, "Center Marker", new Vector3(0f, 0.03f, 7f), new Vector3(3f, 0.06f, 3f), accent);
 
-            CreateTarget(arena.transform, "West Target", new Vector3(-9f, 0f, 10f), target);
-            CreateTarget(arena.transform, "Center Target", new Vector3(0f, 0f, 12.5f), target);
-            CreateTarget(arena.transform, "East Target", new Vector3(9f, 0f, 9f), target);
+            CreateTarget(arena.transform, "West Target", new Vector3(-4f, 0f, -1f), target);
+            CreateTarget(arena.transform, "Center Target", new Vector3(0f, 0f, -1f), target);
+            CreateTarget(arena.transform, "East Target", new Vector3(4f, 0f, -1f), target);
         }
 
         private GameObject BuildPlayer()
@@ -79,7 +91,7 @@ namespace TFM.Gameplay.Prototype
             controller.stepOffset = 0.3f;
             controller.slopeLimit = 50f;
 
-            TFMPlayerInput input = player.AddComponent<TFMPlayerInput>();
+            player.AddComponent<TFMPlayerInput>();
             player.AddComponent<TFMThirdPersonMotor>();
             player.AddComponent<TFMHitscanWeapon>();
 
@@ -94,17 +106,18 @@ namespace TFM.Gameplay.Prototype
 
             Collider primitiveCollider = visual.GetComponent<Collider>();
             primitiveCollider.enabled = false;
-            Destroy(primitiveCollider);
+            if (Application.isPlaying) Destroy(primitiveCollider);
 
             return player;
         }
 
         private Camera PrepareCamera()
         {
-            Camera sceneCamera = Camera.main;
+            Camera sceneCamera = Application.isPlaying ? Camera.main : null;
             if (sceneCamera == null)
             {
                 GameObject cameraObject = new GameObject("Main Camera");
+                cameraObject.transform.SetParent(transform, false);
                 cameraObject.tag = "MainCamera";
                 sceneCamera = cameraObject.AddComponent<Camera>();
                 cameraObject.AddComponent<AudioListener>();
@@ -113,6 +126,8 @@ namespace TFM.Gameplay.Prototype
             sceneCamera.fieldOfView = 65f;
             sceneCamera.nearClipPlane = 0.1f;
             sceneCamera.farClipPlane = 250f;
+            sceneCamera.clearFlags = CameraClearFlags.SolidColor;
+            sceneCamera.backgroundColor = new Color(0.18f, 0.27f, 0.36f);
             return sceneCamera;
         }
 
@@ -159,11 +174,12 @@ namespace TFM.Gameplay.Prototype
             target.AddComponent<TFMTargetDummy>();
         }
 
-        private static void PrepareLighting()
+        private void PrepareLighting()
         {
-            if (Object.FindFirstObjectByType<Light>() == null)
+            if (!Application.isPlaying || Object.FindFirstObjectByType<Light>() == null)
             {
                 GameObject lightObject = new GameObject("Training Yard Sun");
+                lightObject.transform.SetParent(transform, false);
                 Light sun = lightObject.AddComponent<Light>();
                 sun.type = LightType.Directional;
                 sun.intensity = 1.1f;
@@ -172,6 +188,7 @@ namespace TFM.Gameplay.Prototype
             }
 
             RenderSettings.ambientLight = new Color(0.42f, 0.47f, 0.55f);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         }
 
         private Material CreateMaterial(string materialName, Color color)
@@ -216,6 +233,8 @@ namespace TFM.Gameplay.Prototype
 
         private void OnDestroy()
         {
+            // Editor-generated materials become persistent assets, owned by AssetDatabase.
+            if (!Application.isPlaying) return;
             foreach (Material material in _runtimeMaterials)
             {
                 if (material != null)

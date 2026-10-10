@@ -6,8 +6,8 @@ namespace TFM.UI.HUD
 {
     public sealed class TFMPrototypeHud : MonoBehaviour
     {
-        private TFMPlayerInput _input;
-        private TFMHitscanWeapon _weapon;
+        [SerializeField] private TFMPlayerInput _input;
+        [SerializeField] private TFMHitscanWeapon _weapon;
         private GUIStyle _titleStyle;
         private GUIStyle _bodyStyle;
         private GUIStyle _zoneStyle;

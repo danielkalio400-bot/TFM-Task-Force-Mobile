@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compile check only: reference an installed Unity Editor's managed assemblies.
+       This project is outside Assets and does not change Unity's package manifest. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <InputBackend Condition="'$(InputBackend)' == ''">Both</InputBackend>
+    <DefineConstants Condition="'$(InputBackend)' == 'Both'">ENABLE_INPUT_SYSTEM;ENABLE_LEGACY_INPUT_MANAGER</DefineConstants>
+    <DefineConstants Condition="'$(InputBackend)' == 'New'">ENABLE_INPUT_SYSTEM</DefineConstants>
+    <DefineConstants Condition="'$(InputBackend)' == 'Legacy'">ENABLE_LEGACY_INPUT_MANAGER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../GameClient/StarterAssets/Assets/_TFM/**/*.cs" Exclude="../../GameClient/StarterAssets/Assets/_TFM/Editor/**/*.cs" />
+    <Reference Include="$(UnityReferenceDirectory)/Unity*.dll" />
+    <Reference Include="$(InputSystemAssembly)" Condition="'$(InputSystemAssembly)' != ''" />
+    <Compile Include="../../GameClient/StarterAssets/Assets/_TFM/Editor/**/*.cs" Condition="'$(UnityEditorAssembly)' != ''" />
+    <Reference Include="$(UnityEditorAssembly)" Condition="'$(UnityEditorAssembly)' != ''" />
+  </ItemGroup>
+  <Target Name="CheckParameters" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(UnityReferenceDirectory)' == ''" Text="Set UnityReferenceDirectory to the directory containing UnityEngine.CoreModule.dll and the other UnityEngine modules." />
+    <Error Condition="'$(InputBackend)' != 'Both' and '$(InputBackend)' != 'New' and '$(InputBackend)' != 'Legacy'" Text="InputBackend must be Both, New or Legacy." />
+  </Target>
+</Project>

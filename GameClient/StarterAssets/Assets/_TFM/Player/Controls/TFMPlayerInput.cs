@@ -205,9 +205,10 @@ namespace TFM.Player.Controls
             {
                 Touch touch = Input.GetTouch(index);
                 int finger = touch.fingerId;
-                bool ended = touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled;
+                bool ended = touch.phase == UnityEngine.TouchPhase.Ended ||
+                             touch.phase == UnityEngine.TouchPhase.Canceled;
 
-                if (touch.phase == TouchPhase.Began)
+                if (touch.phase == UnityEngine.TouchPhase.Began)
                 {
                     ClaimFinger(finger, touch.position);
                 }
