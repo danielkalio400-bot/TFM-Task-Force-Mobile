@@ -55,6 +55,7 @@ export function makeServer() {
       return sendJson(response, 200, {
         service: "tfm-api-starter",
         productionReady: false,
+        authentication: "not-implemented",
         identity: "dev-validated-subject-placeholder",
         bazidOidc: "not-connected",
         multiplayerTransport: "not-implemented",
