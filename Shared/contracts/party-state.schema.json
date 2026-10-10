@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/party-state.schema.json",
+  "title": "TFM Party State",
+  "type": "object",
+  "required": ["partyId", "leaderPlayerId", "maximumMembers", "members"],
+  "properties": {
+    "partyId": { "type": "string", "minLength": 1 },
+    "leaderPlayerId": { "type": "string", "minLength": 1 },
+    "maximumMembers": { "type": "integer", "minimum": 1, "maximum": 16 },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["playerId", "platform", "role", "skillRating", "ready"],
+        "properties": {
+          "playerId": { "type": "string", "minLength": 1 },
+          "platform": { "enum": ["android", "ios", "windows"] },
+          "role": { "enum": ["leader", "member"] },
+          "skillRating": { "type": "integer", "minimum": 0 },
+          "ready": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

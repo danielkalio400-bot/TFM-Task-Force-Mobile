@@ -50,4 +50,17 @@ export class ServerRegistry {
     const server = this.#servers.get(serverId);
     return server ? { ...server } : null;
   }
+
+  stats(region) {
+    const values = [...this.#servers.values()]
+      .filter(server => !region || server.region === region);
+
+    return {
+      total: values.length,
+      ready: values.filter(server => server.health === "ready").length,
+      degraded: values.filter(server => server.health === "degraded").length,
+      offline: values.filter(server => server.health === "offline").length,
+    };
+  }
 }
+

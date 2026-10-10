@@ -32,6 +32,11 @@ import { MatchSessionService } from "./services/match-sessions.mjs";
 import { ServerDrainService } from "./services/server-draining.mjs";
 import { IncidentService } from "./services/incidents.mjs";
 import { FairPlayService } from "./services/fairplay.mjs";
+import { handleGameplayServices } from "./routes/gameplay-services.mjs";
+import { PartyService } from "./services/parties.mjs";
+import { RewardService } from "./services/rewards.mjs";
+import { ReconnectRestoreService } from "./services/reconnect-restores.mjs";
+import { OperationsHealthService } from "./services/operations-health.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -62,6 +67,10 @@ export function makeServer() {
   const serverDrains = new ServerDrainService();
   const incidents = new IncidentService();
   const fairPlay = new FairPlayService();
+  const parties = new PartyService();
+  const rewards = new RewardService();
+  const reconnectRestores = new ReconnectRestoreService();
+  const operationsHealth = new OperationsHealthService({ servers, incidents });
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -101,6 +110,10 @@ export function makeServer() {
         matchSessionFlow: "local-in-memory-prototype",
         serverDraining: "local-in-memory-prototype",
         fairPlayReview: "local-signal-intake",
+        parties: "local-in-memory-prototype",
+        rewardGrants: "local-idempotent-prototype",
+        reconnectRestoration: "local-single-use-prototype",
+        operationsHealth: "local-aggregate-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -132,6 +145,12 @@ export function makeServer() {
       drains: serverDrains,
       incidents,
       fairPlay,
+    })) return;
+    if (await handleGameplayServices(request, response, path, {
+      parties,
+      rewards,
+      restores: reconnectRestores,
+      health: operationsHealth,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

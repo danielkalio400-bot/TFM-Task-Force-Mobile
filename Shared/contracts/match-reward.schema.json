@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/match-reward.schema.json",
+  "title": "TFM Match Reward",
+  "type": "object",
+  "required": ["matchId", "playerId", "experience", "softCredits"],
+  "properties": {
+    "matchId": { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "experience": { "type": "integer", "minimum": 0 },
+    "softCredits": { "type": "integer", "minimum": 0 },
+    "source": { "type": "string", "minLength": 1 }
+  }
+}

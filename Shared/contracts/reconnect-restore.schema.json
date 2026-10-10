@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/reconnect-restore.schema.json",
+  "title": "TFM Reconnect Restore State",
+  "type": "object",
+  "required": ["restoreId", "matchId", "playerId", "serverId", "expiresAt"],
+  "properties": {
+    "restoreId": { "type": "string", "minLength": 1 },
+    "matchId": { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "serverId": { "type": "string", "minLength": 1 },
+    "teamId": { "type": "string" },
+    "score": { "type": "integer", "minimum": 0 },
+    "health": { "type": "integer", "minimum": 0 },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}
