@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "platformDefaults": {
+    "android": {
+      "maximumAverageFrameTimeMs": 33.34,
+      "maximumAverageRoundTripMs": 180,
+      "maximumAveragePacketLoss01": 0.03,
+      "maximumAverageThermalLevel01": 0.8
+    },
+    "ios": {
+      "maximumAverageFrameTimeMs": 33.34,
+      "maximumAverageRoundTripMs": 180,
+      "maximumAveragePacketLoss01": 0.03,
+      "maximumAverageThermalLevel01": 0.8
+    },
+    "windows": {
+      "maximumAverageFrameTimeMs": 33.34,
+      "maximumAverageRoundTripMs": 180,
+      "maximumAveragePacketLoss01": 0.03,
+      "maximumAverageThermalLevel01": 1.0
+    }
+  },
+  "rule": "These are development defaults only. Final thresholds must be validated on production devices, networks and server regions."
+}

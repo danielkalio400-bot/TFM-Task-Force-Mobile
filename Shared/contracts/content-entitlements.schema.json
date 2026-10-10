@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/content-entitlements.schema.json",
+  "title": "TFM Content Entitlement",
+  "type": "object",
+  "required": ["playerId", "packId", "state"],
+  "properties": {
+    "playerId": { "type": "string", "minLength": 1 },
+    "packId": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["granted", "not-granted", "suspended", "expired"] },
+    "grantedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

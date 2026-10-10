@@ -64,6 +64,12 @@ import { contentDeliveryContract, releaseReadinessContract } from "./delivery-co
 import { ContentDeliveryService } from "./services/content-delivery.mjs";
 import { SectionLaunchService } from "./services/section-launch.mjs";
 import { ReleaseReadinessService } from "./services/release-readiness.mjs";
+import { handleProductionSession } from "./routes/production-session.mjs";
+import { productionTelemetryGates } from "./production-contracts.mjs";
+import { ContentEntitlementService } from "./services/content-entitlements.mjs";
+import { DedicatedSessionCoordinator } from "./services/dedicated-session-coordinator.mjs";
+import { AuthoritativeRecoveryService } from "./services/authoritative-recovery.mjs";
+import { TelemetryGateService } from "./services/telemetry-gates.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -114,6 +120,8 @@ export function makeServer() {
   const sectionLifecycles = new SectionLifecycleService();
   const contentDelivery = new ContentDeliveryService(contentPackCatalog);
   const releaseReadiness = new ReleaseReadinessService();
+  const entitlements = new ContentEntitlementService(contentPackCatalog);
+  const telemetryGates = new TelemetryGateService(productionTelemetryGates);
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
@@ -128,6 +136,13 @@ export function makeServer() {
     lifecycles: sectionLifecycles,
     sectionSessions,
   });
+  const dedicatedSessions = new DedicatedSessionCoordinator({
+    liveOperations,
+    assignments: assignmentsV2,
+    lifecycles: sectionLifecycles,
+    persistence: sessionPersistence,
+  });
+  const authoritativeRecovery = new AuthoritativeRecoveryService(sessionPersistence);
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -188,6 +203,10 @@ export function makeServer() {
         contentDelivery: "local-package-metadata-prototype",
         sectionLaunch: "local-gated-orchestration-prototype",
         releaseReadiness: "local-gate-evaluation",
+        contentEntitlements: "local-player-pack-prototype",
+        dedicatedSessionAllocation: "local-authoritative-orchestration-prototype",
+        authoritativeRecovery: "local-snapshot-bound-prototype",
+        productionTelemetryGates: "development-threshold-evaluation",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -262,6 +281,14 @@ export function makeServer() {
         delivery: contentDeliveryContract,
         release: releaseReadinessContract,
       },
+    })) return;
+    if (await handleProductionSession(request, response, path, {
+      entitlements,
+      contentCompatibility,
+      dedicatedSessions,
+      recovery: authoritativeRecovery,
+      telemetry: telemetryGates,
+      contracts: { telemetry: productionTelemetryGates },
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
