@@ -6,6 +6,11 @@
   incomplete-source rejection, missing-project rejection, backups, preservation
   of Unity GUIDs/local scenes, and an idempotent second update. Fixtures remain
   in a uniquely named temporary directory for inspection.
+- Run `pwsh -File Tests/UnityProjectPaths.Tests.ps1` for nested/root project
+  discovery, ambiguous project rejection, explicit selection and persistence,
+  offline importing/launching, launch arguments with spaces, missing Editor
+  handling, preview, project switching, and fresh scaffold import. Launching is
+  mocked; these tests do not run Unity or verify rendering.
 - In Unity, use **TFM > Validate Training Scene**. First generation saves and
   reloads the scene before checking component counts and serialized references.
 - For CI with a licensed Unity installation:

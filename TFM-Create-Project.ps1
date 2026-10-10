@@ -21,6 +21,21 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Run from the complete repository/ZIP so new projects get the current prototype.
+$packageAssets = Join-Path $PSScriptRoot 'GameClient/StarterAssets/Assets/_TFM'
+$packageFiles = @('README.md', 'GameClient/README-UNITY-SETUP.md',
+    'Update-TFM-Unity.ps1', 'Open-TFM-Unity.ps1', 'Import-TFM-StarterAssets.ps1', 'TFM-Create-Project.ps1')
+if (-not (Test-Path -LiteralPath (Join-Path $packageAssets 'Editor/TFMTrainingSceneBuilder.cs'))) {
+    throw 'Run TFM-Create-Project.ps1 from the complete TFM repository or extracted ZIP.'
+}
+$packageFiles += @(Get-ChildItem -LiteralPath $packageAssets -Recurse -Filter '*.cs' |
+    ForEach-Object { $_.FullName.Substring($PSScriptRoot.Length + 1).Replace('\', '/') })
+foreach ($relative in $packageFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $relative) -PathType Leaf)) {
+        throw "Missing packaged file: $relative. No files changed."
+    }
+}
+
 try { $Root = [System.IO.Path]::GetFullPath($Root) }
 catch { throw "Invalid Root path: $($_.Exception.Message)" }
 
@@ -198,36 +213,6 @@ Write-Host "Target: $Root"
 if ($Preview) { Write-Host 'Mode: PREVIEW (read-only)' } else { Write-Host 'Mode: CREATE (existing files preserved)' }
 foreach ($folder in $folders) { Ensure-Folder $folder | Out-Null }
 
-Add-FileIfMissing 'README.md' @'
-# TFM - Task Force Mobile
-
-Independent Unity 6 mobile game project. BazID will provide identity through an
-approved OIDC/PKCE flow; TFM owns its own progression, servers and game data.
-
-THIS IS A PROJECT SCAFFOLD, NOT A PLAYABLE GAME.
-
-## Unity setup
-1. Install Unity Hub and a supported Unity 6 LTS editor with Android Build Support.
-2. In Unity Hub create a **Universal 3D** project at:
-   `GameClient/TFM-Unity` (this directory is intentionally NOT pre-created).
-3. After Unity finishes creating the project, run the generated
-   `Import-TFM-StarterAssets.ps1` to import the TFM code and folder structure.
-4. Open Unity and confirm the imported C# scripts compile.
-5. Design original scenes and implement gameplay; no scenes are shipped here.
-
-## Backend starter
-- Requires Node.js 20+.
-- Run `cd Backend; npm start` (no dependencies needed) to start a local-only
-  catalog/status endpoint on http://127.0.0.1:4100.
-- Run `cd Backend; npm test` for smoke tests.
-- The server has no BazID integration, no player accounts, no matchmaking and
-  no multiplayer networking yet. Do not expose it publicly.
-
-## Ownership
-Bazaara ecosystem applications are separate and remain unchanged.
-TFM is a standalone project and requires secure BazID integration later.
-'@
-
 Add-FileIfMissing '.gitignore' @'
 # Private config and secrets
 .env
@@ -257,6 +242,7 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+.tfm-unity-project.json
 '@
 
 Add-FileIfMissing '.gitattributes' @'
@@ -271,95 +257,11 @@ Add-FileIfMissing '.gitattributes' @'
 *.psd binary
 '@
 
-Add-FileIfMissing 'GameClient/README-UNITY-SETUP.md' @'
-# Create the REAL Unity project via Unity Hub
-
-Unity Hub -> New project -> Unity 6 LTS -> Universal 3D template.
-Set the project location to GameClient/TFM-Unity.
-Do not create a project using the Built-In or HDRP template.
-
-This scaffold intentionally does not fabricate Unity's Packages/manifest.json,
-ProjectSettings, URP assets or Unity .meta files. Unity Hub is responsible for
-creating those files with versions that match the installed editor.
-
-Then run ../Import-TFM-StarterAssets.ps1 from the TFM repository root to copy
-StarterAssets into TFM-Unity/Assets/_TFM. Existing assets are never overwritten.
-
-The C# examples provide a menu/mode data model and a basic startup marker;
-they do not implement gameplay, authentication or multiplayer.
-'@
-
-Add-FileIfMissing 'Import-TFM-StarterAssets.ps1' @'
-#requires -Version 5.1
-[CmdletBinding()]
-param([string] $Root, [switch] $Preview)
-$ErrorActionPreference = 'Stop'
-if ([string]::IsNullOrWhiteSpace($Root)) {
-    $Root = $PSScriptRoot
+# Copy the maintained setup tools and gameplay scripts instead of generating
+# an obsolete two-script importer. Existing local files are still preserved.
+foreach ($relative in $packageFiles) {
+    Add-FileIfMissing $relative (Get-Content -LiteralPath (Join-Path $PSScriptRoot $relative) -Raw)
 }
-if ([string]::IsNullOrWhiteSpace($Root) -and -not [string]::IsNullOrWhiteSpace($MyInvocation.MyCommand.Path)) {
-    $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-}
-if ([string]::IsNullOrWhiteSpace($Root)) {
-    throw 'Could not determine the TFM repository root. Pass it explicitly with -Root.'
-}
-$Root = [System.IO.Path]::GetFullPath($Root)
-$source = Join-Path $Root 'GameClient\StarterAssets\Assets\_TFM'
-$unityAssets = Join-Path $Root 'GameClient\TFM-Unity\Assets'
-$target = Join-Path $unityAssets '_TFM'
-if (-not (Test-Path -LiteralPath $source -PathType Container)) { throw 'Starter Assets source was not found.' }
-if (-not (Test-Path -LiteralPath (Join-Path $Root 'GameClient\TFM-Unity\Packages\manifest.json'))) {
-    throw 'Create a Universal 3D project in Unity Hub at GameClient/TFM-Unity first.'
-}
-if (Test-Path -LiteralPath $target) {
-    throw 'TFM assets already exist in Unity. Refusing to overwrite. Merge any updates manually.'
-}
-if ($Preview) {
-    Write-Host "PREVIEW: Would copy $source to $target"
-} else {
-    Copy-Item -LiteralPath $source -Destination $target -Recurse
-    Write-Host 'Imported TFM StarterAssets. Open your Unity project to compile scripts.'
-}
-'@
-
-Add-FileIfMissing 'GameClient/StarterAssets/Assets/_TFM/Core/Bootstrap/TFMStartup.cs' @'
-using UnityEngine;
-
-namespace TFM.Core
-{
-    // Minimal startup marker; this does not make a playable game.
-    public class TFMStartup : MonoBehaviour
-    {
-        private void Start()
-        {
-            Debug.Log("TFM scaffold loaded. Gameplay systems not yet implemented.");
-        }
-    }
-}
-'@
-
-Add-FileIfMissing 'GameClient/StarterAssets/Assets/_TFM/Core/Configuration/TFMModeCatalog.cs' @'
-using System;
-using System.Collections.Generic;
-
-namespace TFM.Core
-{
-    public enum MainSection { Multiplayer, BattleRoyale, Zombies, DMZRecon }
-
-    public static class TFMModeCatalog
-    {
-        // Menu entries only. Every mode needs an independent implementation.
-        public static readonly IReadOnlyDictionary<MainSection, string[]> Modes =
-            new Dictionary<MainSection, string[]>
-            {
-                { MainSection.Multiplayer, new [] { "Team Deathmatch", "Frontline", "Domination", "Search & Destroy", "Kill Confirmed", "Hardpoint", "Free-for-All", "Gunfight", "Ranked MP", "League Play" } },
-                { MainSection.BattleRoyale, new [] { "Classic BR (100 players)", "Alcatraz", "Tank Battle", "Training Ground", "Blitz", "Solid Gold", "Prop Hunt", "Rotating Events" } },
-                { MainSection.Zombies, new [] { "Raid Normal", "Raid Hardcore", "Survival", "Cooperative Defense", "Special Events" } },
-                { MainSection.DMZRecon, new [] { "Standard Extraction", "Solo Extraction", "Squad Extraction", "PvPvE Missions", "High-Risk Zones", "Contracts", "Special Recon Operations" } }
-            };
-    }
-}
-'@
 
 Add-FileIfMissing 'Shared/contracts/mode-catalog.json' @'
 {
@@ -596,8 +498,8 @@ Write-Host "Existing files preserved: $script:fileSkipped"
 if ($Preview) {
     Write-Host 'PREVIEW ONLY: no files changed. Remove -Preview to create the project.'
 } else {
-    Write-Host 'SUCCESS: TFM scaffold created. This is not a playable game.'
-    Write-Host 'NEXT: Unity Hub -> Universal 3D -> create GameClient/TFM-Unity.'
+    Write-Host 'SUCCESS: TFM folders and current training-yard source prepared. Create a Unity project to run it.'
+    Write-Host 'NEXT: Unity Hub -> Universal 3D -> Name: TFM-Unity; Location: GameClient (the parent folder).'
     Write-Host 'THEN: powershell -File .\Import-TFM-StarterAssets.ps1 -Root <TFM root>'
     Write-Host 'BACKEND TEST: cd Backend; npm test'
 }

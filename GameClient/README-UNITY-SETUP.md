@@ -1,7 +1,10 @@
 # Create the REAL Unity project via Unity Hub
 
 Unity Hub -> New project -> Unity 6 LTS -> Universal 3D template.
-Set the project location to GameClient/TFM-Unity.
+Set **Project name** to `TFM-Unity` and **Location** to the repository's
+`GameClient` folder. Hub appends the name automatically, producing
+`GameClient/TFM-Unity`. Choosing that full path as the Location produces an
+extra `TFM-Unity` folder inside it.
 Do not create a project using the Built-In or HDRP template.
 
 Committed platform targets:
@@ -23,11 +26,35 @@ root. To update an existing project, close Unity and run:
 ```
 
 The updater works with ZIP downloads as well as Git clones. It checks all ten
-required scripts before copying, backs up changed scripts under `backups`,
+C# scripts and four PowerShell tools before copying, backs up changed scripts under `backups`,
 preserves `.meta` files and custom scenes, and verifies installed file hashes.
 It downloads scripts directly from `raw.githubusercontent.com`; it does not
 require GitHub's archive host. If any download fails, project files stay untouched.
 It can locate and reopen the project's Unity version in the standard Hub location.
+For another Editor installation location, pass `-UnityEditorPath` with its executable.
+
+The importer and updater detect projects in `GameClient/TFM-Unity`, `TFM-Unity`,
+and an additional `TFM-Unity` folder inside either path. A complete project must
+contain `Assets`, `Packages/manifest.json`, and `ProjectSettings/ProjectVersion.txt`.
+When two projects exist, select the actual project explicitly; for example:
+
+```powershell
+./Update-TFM-Unity.ps1 -Root "C:\Users\danie\bazaara\TFM-Task-Force-Mobile" -ProjectPath "GameClient/TFM-Unity/TFM-Unity" -OpenUnity
+```
+
+This updates the nested project in place and saves the selection in the ignored
+`.tfm-unity-project.json`. Existing scenes and the other project are preserved.
+The scripts never print running Unity command lines, which can contain sign-in tokens.
+The updated import, update, scaffold and launch scripts are installed into the
+repository root too, replacing old copies with backups.
+
+Use `./Open-TFM-Unity.ps1` for future launches. It reads the saved selection,
+verifies that the TFM scripts exist, and launches that exact project with
+`TFM.Editor.TFMTrainingSceneBuilder.OpenTrainingYard`. It needs no download.
+To change the saved project, run the updater again with `-ProjectPath`.
+Use `-Preview` on the importer/updater to display the selection without writes.
+Run the scaffold generator from the complete repository or extracted ZIP; it
+copies the maintained scripts instead of regenerating old two-script templates.
 
 On first import, the Editor creates `Assets/_TFM/Scenes/TFMTrainingYard.unity`
 and persistent materials. It opens the yard automatically if the current scene

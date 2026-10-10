@@ -17,8 +17,9 @@ Mobile remains the primary optimization focus, but Windows PC is a committed rel
 ## Unity setup
 1. Install Unity Hub and a supported Unity 6 LTS editor.
 2. Install the platform modules required for the builds you intend to make: Android Build Support, iOS Build Support on a supported macOS build environment, and Windows Build Support.
-3. In Unity Hub create a **Universal 3D** project at:
-   `GameClient/TFM-Unity` (this directory is intentionally NOT pre-created).
+3. In Unity Hub create a **Universal 3D** project with **Project name: TFM-Unity**
+   and **Location: `<repository>/GameClient`**. Hub appends the project name;
+   the resulting folder should be `GameClient/TFM-Unity`.
 4. After Unity finishes creating the project, run the generated
    `Import-TFM-StarterAssets.ps1` to import the TFM code and folder structure.
 5. Wait for compilation. Unity generates a saved training scene on first import.
@@ -29,6 +30,11 @@ Mobile remains the primary optimization focus, but Windows PC is a committed rel
 
 For existing projects, `Update-TFM-Unity.ps1 -Root <repository-path> -OpenUnity`
 updates scripts with backups and verifies the installation without requiring Git.
+It detects standard and nested project folders. If more than one exists, select
+the one you want with `-ProjectPath "GameClient/TFM-Unity/TFM-Unity"` (or the
+outer path). The selection is saved locally; no project folders are moved.
+After updating, run `./Open-TFM-Unity.ps1` to open the selected project and its
+training scene without downloading again. Close Unity before updating.
 Use **TFM > Validate Training Scene** to check the saved scene and **TFM > Build
 Windows Training Demo** to create an executable locally.
 
