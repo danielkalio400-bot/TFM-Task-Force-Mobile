@@ -75,6 +75,12 @@ import { bazIdAuthBoundary } from "./identity-contracts.mjs";
 import { IdentityAuditService } from "./services/identity-audit.mjs";
 import { IdentityBoundaryService } from "./services/identity-boundary.mjs";
 import { DataDeletionRequestService } from "./services/data-deletion-requests.mjs";
+import { handleSocial } from "./routes/social.mjs";
+import { socialPrivacyRuntime } from "./social-contracts.mjs";
+import { FriendsService } from "./services/friends.mjs";
+import { PrivacyService } from "./services/privacy.mjs";
+import { ClanService } from "./services/clans.mjs";
+import { SocialPolicyService } from "./services/social-policy.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -130,6 +136,10 @@ export function makeServer() {
   const identityAudit = new IdentityAuditService();
   const identityBoundary = new IdentityBoundaryService({ sessions, audit: identityAudit });
   const deletionRequests = new DataDeletionRequestService();
+  const friends = new FriendsService();
+  const privacy = new PrivacyService();
+  const clans = new ClanService();
+  const socialPolicy = new SocialPolicyService({ friends, clans, privacy });
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
@@ -218,6 +228,9 @@ export function makeServer() {
         identityBoundary: "external-provider-development-boundary",
         identityAudit: "local-audit-prototype",
         dataDeletionRequests: "local-workflow-prototype",
+        socialGraph: "local-privacy-aware-prototype",
+        clans: "local-role-based-prototype",
+        socialPrivacy: "local-policy-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -306,6 +319,13 @@ export function makeServer() {
       audit: identityAudit,
       deletions: deletionRequests,
       contract: bazIdAuthBoundary,
+    })) return;
+    if (await handleSocial(request, response, path, {
+      friends,
+      privacy,
+      clans,
+      policy: socialPolicy,
+      contract: socialPrivacyRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
