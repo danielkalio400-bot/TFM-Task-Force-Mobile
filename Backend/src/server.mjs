@@ -2,6 +2,9 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { sendJson } from "./http/json.mjs";
+import { handleMatchmaking } from "./routes/matchmaking.mjs";
+import { MatchmakingService } from "./services/matchmaking.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -10,17 +13,11 @@ const platformTargets = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/platform-targets.json", import.meta.url), "utf8"),
 );
 
-function sendJson(response, status, payload) {
-  response.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-    "x-content-type-options": "nosniff",
-  });
-  response.end(JSON.stringify(payload));
-}
-
 export function makeServer() {
-  return createServer((request, response) => {
+  const sectionIds = modeCatalog.sections.map(section => section.id);
+  const matchmaking = new MatchmakingService(sectionIds);
+
+  return createServer(async (request, response) => {
     const path = (request.url || "").split("?")[0];
 
     if (request.method === "GET" && path === "/health") {
@@ -36,7 +33,8 @@ export function makeServer() {
         service: "tfm-api-starter",
         productionReady: false,
         authentication: "not-implemented",
-        multiplayer: "not-implemented",
+        multiplayerTransport: "not-implemented",
+        matchmaking: "local-in-memory-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -47,6 +45,10 @@ export function makeServer() {
 
     if (request.method === "GET" && path === "/v1/platforms") {
       return sendJson(response, 200, platformTargets);
+    }
+
+    if (await handleMatchmaking(request, response, path, matchmaking)) {
+      return;
     }
 
     return sendJson(response, 404, { error: "not_found" });
