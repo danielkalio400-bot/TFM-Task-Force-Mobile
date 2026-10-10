@@ -81,6 +81,16 @@ export class ObjectiveServerLeaseMonitor {
       // keep privileges just because it previously held a lease.
       const auth=this.#bridge.createServerSession({serverId,principal});
       if(!auth.ok)return denied("dedicated_server_identity_revoked");
+      if(method==="openMatch") {
+        const input=args[0];
+        if(!input || typeof input!=="object" || Array.isArray(input))
+          return denied("invalid_dedicated_match_input");
+        // openMatch accepts a single object, unlike follow-up operations.
+        // Always inject the match identity bound to this lease.
+        if(input.matchId!==undefined && input.matchId!==matchId)
+          return denied("dedicated_match_mismatch");
+        return entry.session.openMatch({...input,matchId});
+      }
       return entry.session[method](matchId,...args);
     };
     const publicSession={
