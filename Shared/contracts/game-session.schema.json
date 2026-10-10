@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/game-session.schema.json",
+  "title": "TFM Game Session",
+  "type": "object",
+  "required": ["sessionId", "playerId", "expiresAt"],
+  "properties": {
+    "sessionId": { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -8,11 +8,16 @@ import { handleLobbies } from "./routes/lobbies.mjs";
 import { handleAllocations } from "./routes/allocations.mjs";
 import { handleProfiles } from "./routes/profiles.mjs";
 import { handleRecovery } from "./routes/recovery.mjs";
+import { handleLiveServices } from "./routes/live-services.mjs";
 import { MatchmakingService } from "./services/matchmaking.mjs";
 import { LobbyService } from "./services/lobbies.mjs";
 import { AllocationService } from "./services/allocations.mjs";
 import { ProfileService } from "./services/profiles.mjs";
 import { RecoveryService } from "./services/recovery.mjs";
+import { GameSessionService } from "./services/sessions.mjs";
+import { InventoryLedger } from "./services/inventory-ledger.mjs";
+import { MatchResultService } from "./services/match-results.mjs";
+import { ModerationService } from "./services/moderation.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -28,6 +33,12 @@ export function makeServer() {
   const allocations = new AllocationService();
   const profiles = new ProfileService();
   const recovery = new RecoveryService();
+  const sessions = new GameSessionService();
+  const inventory = new InventoryLedger();
+  const matchResults = new MatchResultService();
+  const moderation = new ModerationService();
+
+  matchResults.trustLocalServer("local-dev-server");
 
   return createServer(async (request, response) => {
     const path = (request.url || "").split("?")[0];
@@ -44,11 +55,15 @@ export function makeServer() {
       return sendJson(response, 200, {
         service: "tfm-api-starter",
         productionReady: false,
-        authentication: "not-implemented",
+        identity: "dev-validated-subject-placeholder",
+        bazidOidc: "not-connected",
         multiplayerTransport: "not-implemented",
         matchmaking: "local-in-memory-prototype",
         lobbies: "local-in-memory-prototype",
         progression: "local-in-memory-prototype",
+        inventoryAuthority: "local-development-ledger",
+        moderation: "local-report-intake",
+        matchResults: "trusted-local-server-prototype",
         sessionRecovery: "local-in-memory-prototype",
         serverAllocation: "placeholder-only",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
@@ -66,6 +81,9 @@ export function makeServer() {
     if (await handleAllocations(request, response, path, allocations)) return;
     if (await handleProfiles(request, response, path, profiles)) return;
     if (await handleRecovery(request, response, path, recovery)) return;
+    if (await handleLiveServices(request, response, path, {
+      sessions, inventory, matchResults, moderation
+    })) return;
 
     return sendJson(response, 404, { error: "not_found" });
   });

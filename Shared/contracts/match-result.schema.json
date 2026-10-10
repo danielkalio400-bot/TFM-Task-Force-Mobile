@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/match-result.schema.json",
+  "title": "TFM Authoritative Match Result",
+  "type": "object",
+  "required": ["matchId", "serverId", "modeId", "startedAt", "completedAt", "players"],
+  "properties": {
+    "matchId": { "type": "string", "minLength": 1 },
+    "serverId": { "type": "string", "minLength": 1 },
+    "modeId": { "type": "string", "minLength": 1 },
+    "winningTeamId": { "type": "string" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "players": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["playerId", "teamId", "score", "eliminations", "assists", "experienceGranted"],
+        "properties": {
+          "playerId": { "type": "string", "minLength": 1 },
+          "teamId": { "type": "string" },
+          "score": { "type": "integer", "minimum": 0 },
+          "eliminations": { "type": "integer", "minimum": 0 },
+          "assists": { "type": "integer", "minimum": 0 },
+          "experienceGranted": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}
