@@ -24,13 +24,18 @@ namespace TFM.UI.HUD
         {
             EnsureStyles();
 
-            GUI.Box(new Rect(16f, 16f, 390f, 96f), GUIContent.none);
-            GUI.Label(new Rect(30f, 25f, 320f, 28f), "TFM · 3D TRAINING YARD", _titleStyle);
+            Rect safe=Screen.safeArea;
+            Rect area=TFMMobileControlLayout.GuiSafeArea(safe,Screen.height);
+            float headerWidth=Mathf.Min(390f,Mathf.Max(165f,area.width*0.58f));
+            GUI.Box(new Rect(area.xMin+8f,area.yMin+8f,headerWidth,96f), GUIContent.none);
+            GUI.Label(new Rect(area.xMin+18f,area.yMin+17f,
+                headerWidth-28f,28f), "TFM · 3D TRAINING YARD", _titleStyle);
 
             string controls = Application.isMobilePlatform
                 ? "Left: move   ·   Right: look   ·   FIRE: shoot"
                 : "WASD: move · Shift: sprint · Space: jump\nRight mouse: look · Left mouse: fire · R: reload";
-            GUI.Label(new Rect(30f, 52f, 360f, 52f), controls, _bodyStyle);
+            GUI.Label(new Rect(area.xMin+18f,area.yMin+44f,
+                headerWidth-28f,52f), controls, _bodyStyle);
 
             DrawCrosshairAndAmmo();
 
@@ -41,11 +46,10 @@ namespace TFM.UI.HUD
 
             Color previousColor = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, 0.35f);
-            GUI.Box(new Rect(20f, Screen.height - 165f, 145f, 130f), "MOVE", _zoneStyle);
-            GUI.Box(
-                new Rect(Screen.width - 165f, Screen.height * 0.5f - 65f, 145f, 130f),
-                "LOOK",
-                _zoneStyle);
+            GUI.Box(TFMMobileControlLayout.MoveZone(safe,Screen.height),
+                "MOVE", _zoneStyle);
+            GUI.Box(TFMMobileControlLayout.LookZone(safe,Screen.height),
+                "LOOK", _zoneStyle);
             GUI.color = previousColor;
 
             if (_input == null)
@@ -54,20 +58,17 @@ namespace TFM.UI.HUD
             }
 
             if (GUI.RepeatButton(
-                    new Rect(Screen.width - 130f, Screen.height - 260f, 104f, 78f),
-                    "FIRE"))
+                    TFMMobileControlLayout.Fire(safe,Screen.height),"FIRE"))
             {
                 _input.QueueFire();
             }
             if (GUI.Button(
-                    new Rect(Screen.width - 250f, Screen.height - 145f, 96f, 64f),
-                    "JUMP"))
+                    TFMMobileControlLayout.Jump(safe,Screen.height),"JUMP"))
             {
                 _input.QueueJump();
             }
             if (GUI.Button(
-                    new Rect(Screen.width - 250f, Screen.height - 225f, 96f, 54f),
-                    "RELOAD"))
+                    TFMMobileControlLayout.Reload(safe,Screen.height),"RELOAD"))
             {
                 _input.QueueReload();
             }
@@ -89,8 +90,13 @@ namespace TFM.UI.HUD
             string ammo = _weapon.IsReloading
                 ? "RELOADING"
                 : $"{_weapon.CurrentAmmo:00} / {_weapon.ReserveAmmo:000}";
-            GUI.Box(new Rect(Screen.width - 188f, 18f, 170f, 54f), GUIContent.none);
-            GUI.Label(new Rect(Screen.width - 178f, 24f, 150f, 42f), ammo, _ammoStyle);
+            Rect safe=TFMMobileControlLayout.GuiSafeArea(
+                Screen.safeArea,Screen.height);
+            float width=Mathf.Min(170f,Mathf.Max(100f,safe.width*0.29f));
+            GUI.Box(new Rect(safe.xMax-width-8f,safe.yMin+8f,
+                width,54f),GUIContent.none);
+            GUI.Label(new Rect(safe.xMax-width,safe.yMin+14f,
+                width-16f,42f),ammo,_ammoStyle);
         }
 
         private void EnsureStyles()

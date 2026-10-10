@@ -11,6 +11,7 @@ namespace TFM.Player.Controls
     public sealed class TFMPlayerInput : MonoBehaviour
     {
         private const float DefaultTouchRadius = 120f;
+        [SerializeField, Range(0.25f, 2f)] private float touchLookSensitivity=1f;
 
         private int _leftFinger = -1;
         private int _rightFinger = -1;
@@ -52,8 +53,21 @@ namespace TFM.Player.Controls
             {
                 EnhancedTouchSupport.Disable();
             }
+            _enabledEnhancedTouch=false;
+            ResetTransientInput();
         }
 #endif
+
+        private void ResetTransientInput()
+        {
+            _leftFinger=-1;
+            _rightFinger=-1;
+            _leftStart=Vector2.zero;
+            _jumpQueued=_fireQueued=_reloadQueued=false;
+            Move=Look=Vector2.zero;
+            JumpPressed=SprintHeld=FireHeld=ReloadPressed=false;
+            ActiveDevice=TFMInputDeviceKind.Unknown;
+        }
 
         public void QueueJump() => _jumpQueued = true;
         public void QueueFire() => _fireQueued = true;
@@ -81,7 +95,9 @@ namespace TFM.Player.Controls
             }
 
             Move = Vector2.ClampMagnitude(move, 1f);
-            Look = look;
+            Look = ActiveDevice == TFMInputDeviceKind.Touch
+                ? Vector2.ClampMagnitude(look * touchLookSensitivity,48f)
+                : look;
             JumpPressed = jump || _jumpQueued;
             SprintHeld = sprint;
             FireHeld = fire || _fireQueued;
@@ -126,7 +142,9 @@ namespace TFM.Player.Controls
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse != null)
+            // Mobile Input System can synthesize a mouse from a finger.
+            // Prevent move/look touches firing the weapon accidentally.
+            if (mouse != null && !Application.isMobilePlatform)
             {
                 if (mouse.rightButton.isPressed)
                 {
@@ -230,7 +248,7 @@ namespace TFM.Player.Controls
                 new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
             jump = Input.GetButtonDown("Jump");
             sprint = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-            fire = Input.GetMouseButton(0);
+            fire = !Application.isMobilePlatform && Input.GetMouseButton(0);
             reload = Input.GetKeyDown(KeyCode.R);
 
             if (move.sqrMagnitude > 0f || jump || sprint || fire || reload)
@@ -287,25 +305,23 @@ namespace TFM.Player.Controls
 
         private void ClaimFinger(int finger, Vector2 position)
         {
-            if (position.x < Screen.width * 0.5f && _leftFinger < 0)
+            Rect safe=Screen.safeArea;
+            if (!safe.Contains(position) ||
+                TFMMobileControlLayout.IsActionTouch(position,safe,Screen.height))
+                return;
+            float halfway=safe.center.x;
+            if (position.x < halfway && _leftFinger < 0)
             {
                 _leftFinger = finger;
                 _leftStart = position;
             }
-            else if (position.x >= Screen.width * 0.5f &&
-                     !IsMobileButtonZone(position) &&
-                     _rightFinger < 0)
+            else if (position.x >= halfway && _rightFinger < 0)
             {
                 _rightFinger = finger;
             }
         }
 
-        private static bool IsMobileButtonZone(Vector2 position)
-        {
-            return position.x > Screen.width * 0.62f && position.y < 270f;
-        }
-
-        private static float ReadAxis(bool negative, bool positive)
+         private static float ReadAxis(bool negative, bool positive)
         {
             return (positive ? 1f : 0f) - (negative ? 1f : 0f);
         }

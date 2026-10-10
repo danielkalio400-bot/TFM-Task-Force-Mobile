@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "bulk": 49,
+  "platforms": [
+    "Android",
+    "iOS",
+    "Windows"
+  ],
+  "feature": "shared mobile safe-area input and HUD action-button regions",
+  "touchProtection": [
+    "single geometry source for fire/jump/reload",
+    "touch look/movement never claims action buttons",
+    "ignore mobile synthetic mouse fire",
+    "clear transient input on component disable",
+    "bounded adjustable touch look sensitivity"
+  ],
+  "hud": "mobile zone and action controls scale to displayed safe area",
+  "testing": "Node geometry and Unity source integration tests, no Unity Editor or device runtime QA",
+  "security": "offline local input only; does not establish network player authority"
+}

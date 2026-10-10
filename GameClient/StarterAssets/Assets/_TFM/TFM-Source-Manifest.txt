@@ -249,6 +249,7 @@ Player/Camera/TFMThirdPersonCamera.cs
 Player/Controls/TFMGyroAimBridge.cs
 Player/Controls/TFMInputDeviceKind.cs
 Player/Controls/TFMInputSnapshot.cs
+Player/Controls/TFMMobileControlLayout.cs
 Player/Controls/TFMPlayerInput.cs
 Player/Movement/TFMThirdPersonMotor.cs
 Player/State/TFMPlayerLifeState.cs

@@ -1,0 +1,7 @@
+# TFM Bulk 49 — Mobile touch HUD layout and gesture integrity
+
+The Training Yard's mobile action buttons were drawn using absolute `Screen.width` and `Screen.height` coordinates while the gesture recognizer excluded a different hardcoded bottom-right rectangle. On mobile landscape displays with cutouts/safe-area insets, the input code could incorrectly claim a FIRE/RELOAD/JUMP finger as a look gesture. On some mobile input configurations, a finger could additionally appear as a synthesized mouse left-click, causing unintended training shots.
+
+Bulk 49 centralizes the mobile action control geometry in `TFMMobileControlLayout.cs`, including conversion between Unity's screen-coordinate and IMGUI coordinate systems. MOVE and LOOK display zones, FIRE, RELOAD and JUMP buttons now share the safe-area-aware scaled layout. The left/right touch gesture recognizer excludes exactly the button rectangles (with a small touch margin) and refuses touches outside the safe area. Mobile-synthesized mouse input is not used to fire. Touch look delta has a bounded adjustable sensitivity and transient state is cleared when the input component is disabled.
+
+The source manifest includes the new Unity file. Node tests validate action buttons and exclusions for several original landscape phone/tablet sizes and static Unity integration. Physical Unity 6 Editor, accessibility inspection, Android/iOS latency, controller/Windows behavior and 30 MB game packages remain unverified.
