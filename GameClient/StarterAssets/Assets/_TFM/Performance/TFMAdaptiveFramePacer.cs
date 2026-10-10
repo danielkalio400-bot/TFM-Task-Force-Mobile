@@ -50,7 +50,7 @@ namespace TFM.Performance
             var refresh = Screen.currentResolution.refreshRateRatio;
             double hertz = refresh.value;
             _refreshHz = Mathf.Clamp(Mathf.RoundToInt((float)hertz), 30, 1000);
-            if (!double.IsFinite(hertz) || hertz < 30) _refreshHz = 60;
+            if (double.IsNaN(hertz) || double.IsInfinity(hertz) || hertz < 30) _refreshHz = 60;
             mode = (TFMQualityMode)Mathf.Clamp(PlayerPrefs.GetInt(ModeKey, (int)mode), 0, 3);
             _capHz = Mathf.Clamp(PlayerPrefs.GetInt(CapKey, 0), 0, _refreshHz);
             QualitySettings.vSyncCount = 0;
