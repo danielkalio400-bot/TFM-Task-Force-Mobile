@@ -112,6 +112,9 @@ import { InventoryAuthorityService } from "./services/inventory-authority.mjs";
 import { handleOperationsReliability } from "./routes/operations-reliability.mjs";
 import { operationsReliabilityRuntime } from "./operations-reliability-contracts.mjs";
 import { OperationsReliabilityService } from "./services/operations-reliability.mjs";
+import { handlePatchRelease } from "./routes/patch-release.mjs";
+import { patchReleaseRuntime } from "./patch-release-contracts.mjs";
+import { PatchReleaseService } from "./services/patch-release.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -205,6 +208,7 @@ export function makeServer() {
     liveOperations,
     contract: operationsReliabilityRuntime,
   });
+  const patchRelease = new PatchReleaseService(patchReleaseRuntime);
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -312,6 +316,7 @@ export function makeServer() {
         playerProfileAuthority: "local-stable-id-subject-reference-prototype",
         inventoryAuthorityV2: "local-server-owned-transaction-prototype",
         operationsReliability: "local-health-rollback-load-gate-prototype",
+        patchRelease: "local-staged-release-metadata-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -445,6 +450,10 @@ export function makeServer() {
     if (await handleOperationsReliability(request, response, path, {
       reliability: operationsReliability,
       contract: operationsReliabilityRuntime,
+    })) return;
+    if (await handlePatchRelease(request, response, path, {
+      patches: patchRelease,
+      contract: patchReleaseRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

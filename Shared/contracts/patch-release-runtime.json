@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "systems": [
+    "platform-release-channels",
+    "immutable-patch-manifests",
+    "minimum-supported-build",
+    "target-build",
+    "integrity-reference",
+    "staged-rollout",
+    "mandatory-optional-update-decision",
+    "rollback-to-previous-patch",
+    "release-audit-history"
+  ],
+  "platforms": ["android", "ios", "windows"],
+  "channels": ["alpha", "beta", "stable"],
+  "rule": "Patch rollout is metadata-driven, staged and reversible. Clients consume signed/integrity-checked production packages but do not decide release authority.",
+  "productionBoundary": "This starter stores package and integrity references only. It does not host binaries, sign packages, bypass app-store review, or replace platform-native update systems."
+}
