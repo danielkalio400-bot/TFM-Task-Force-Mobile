@@ -50,11 +50,25 @@ export class ObjectiveLiveGateway {
     if(this.#sessions.size>=this.#maxSessions)return deny("live_viewer_capacity");
     const linked=this.#bridge.connect(input);
     if(!linked.ok)return linked;
+    return this.#grant(input.matchId,input.playerId,linked);
+  }
+
+  issueReconnectedViewer(input) {
+    this.#evict();
+    if(this.#sessions.size>=this.#maxSessions)return deny("live_viewer_capacity");
+    // This single-use token is consumed in the bridge only AFTER its
+    // independently injected subject authorization and match checks pass.
+    const linked=this.#bridge.reconnect(input);
+    if(!linked.ok)return linked;
+    return this.#grant(linked.matchId,input.playerId,linked);
+  }
+
+  #grant(matchId,playerId,linked) {
+    const now=this.#now();
     const token=randomBytes(32).toString("base64url");
     this.#sessions.set(digest(token),{
-      matchId:input.matchId,playerId:input.playerId,
-      createdAtMs:this.#now(),expiresAtMs:this.#now()+this.#ttlMs,
-      active:false
+      matchId,playerId,createdAtMs:now,
+      expiresAtMs:now+this.#ttlMs,active:false
     });
     return {ok:true,viewerToken:token,expiresInMs:this.#ttlMs,
       reconnectToken:linked.reconnectToken,

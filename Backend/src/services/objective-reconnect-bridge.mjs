@@ -140,10 +140,16 @@ export class ObjectiveReconnectBridge {
       return fail("objective_player_not_enrolled");
     const view=this.#sync(ticket.matchId,lastRevision);
     if(!view.ok)return view;
-    // Single-use token is consumed only after the full validation succeeded.
+    // Rotate only after authorization and catch-up succeeded.
+    // The previous secret remains a consumed tombstone for replay detection.
+    const refreshedToken=randomBytes(32).toString("base64url");
+    const refreshed={...ticket,expiresAtMs:this.#clock()+this.#lifetimeMs,
+      consumed:false};
     ticket.consumed=true;
-    return {ok:true,matchId:ticket.matchId,playerId,sessionSequence:latest.sequence,
-      ...view.view};
+    this.#tickets.set(tokenHash(refreshedToken),refreshed);
+    return {ok:true,matchId:ticket.matchId,playerId,
+      reconnectToken:refreshedToken,expiresInMs:this.#lifetimeMs,
+      sessionSequence:latest.sequence,...view.view};
   }
 
   syncSession({assignmentId,joinCredential,matchId}={}) {

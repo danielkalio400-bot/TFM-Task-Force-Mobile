@@ -8,6 +8,7 @@ import { handleObjectiveSessionIssuer } from "./routes/objective-session-issuer.
 import { objectiveSessionContract } from "./objective-session-contracts.mjs";
 import { handleObjectiveLiveStream } from "./routes/objective-live-stream.mjs";
 import { objectiveLiveContract } from "./objective-live-contracts.mjs";
+import { objectiveReconnectRotationContract } from "./objective-reconnect-rotation-contracts.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
 import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
 import { objectiveReconnectContract } from "./objective-reconnect-contracts.mjs";
@@ -526,6 +527,8 @@ export function makeServer() {
     })) return;
     if (request.method === "GET" && path === "/v1/runtime/objective-reconnect-bridge")
       return sendJson(response, 200, objectiveReconnectContract);
+    if (request.method === "GET" && path === "/v1/runtime/objective-reconnect-rotation")
+      return sendJson(response, 200, objectiveReconnectRotationContract);
     if (await handleObjectiveLiveStream(request, response, path, {
       gateway: objectiveLiveGateway, contract: objectiveLiveContract,
     })) return;

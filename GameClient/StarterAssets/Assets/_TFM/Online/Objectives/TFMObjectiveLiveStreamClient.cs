@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -20,6 +21,13 @@ namespace TFM.Online.Objectives
         public event Action<TFMServerObjectiveSnapshot> SnapshotUpdated;
 
         private readonly TFMObjectiveEventCursor _cursor = new TFMObjectiveEventCursor();
+        // DownloadHandlerScript may execute on a worker thread.
+        // Unity objects and JsonUtility are accessed only from Update().
+        private readonly Queue<TFMObjectiveSseFrameParser.Frame> _pendingFrames =
+            new Queue<TFMObjectiveSseFrameParser.Frame>();
+        private readonly object _frameLock = new object();
+        private bool _queueOverflow;
+        private const int MaxQueuedFrames = 256;
         private UnityWebRequest _request;
         private Coroutine _routine;
         private string _viewerToken;
@@ -86,19 +94,55 @@ namespace TFM.Online.Objectives
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
             {
                 _request = request;
-                request.downloadHandler = new EventDownload(HandleFrame);
+                request.downloadHandler = new EventDownload(QueueFrame);
                 request.SetRequestHeader("Accept", "text/event-stream");
                 request.SetRequestHeader("Authorization", "Bearer " + _viewerToken);
                 request.timeout = 75;
                 Status = "connecting";
                 yield return request.SendWebRequest();
+                FlushFrames();
                 IsConnected = false;
-                Status = request.result == UnityWebRequest.Result.Success
-                    ? "disconnected" : "stream-ended";
+                if (Status != "access-ended" && Status != "resync-required" &&
+                    Status != "invalid-stream-data" && Status != "stream-overflow")
+                    Status = "stream-ended";
                 _request = null;
             }
             _viewerToken = null;
             _routine = null;
+        }
+
+        private void QueueFrame(TFMObjectiveSseFrameParser.Frame frame)
+        {
+            lock (_frameLock)
+            {
+                if (_pendingFrames.Count >= MaxQueuedFrames)
+                {
+                    _queueOverflow = true;
+                    return;
+                }
+                _pendingFrames.Enqueue(frame);
+            }
+        }
+
+        private void Update() { FlushFrames(); }
+
+        private void FlushFrames()
+        {
+            var local = new List<TFMObjectiveSseFrameParser.Frame>();
+            bool overflow;
+            lock (_frameLock)
+            {
+                overflow = _queueOverflow;
+                _queueOverflow = false;
+                while (_pendingFrames.Count > 0) local.Add(_pendingFrames.Dequeue());
+            }
+            if (overflow)
+            {
+                Status = "stream-overflow";
+                _request?.Abort();
+                return;
+            }
+            foreach (var frame in local) HandleFrame(frame);
         }
 
         private void HandleFrame(TFMObjectiveSseFrameParser.Frame frame)
@@ -132,6 +176,11 @@ namespace TFM.Online.Objectives
             _routine = null;
             _request = null;
             _viewerToken = null;
+            lock (_frameLock)
+            {
+                _pendingFrames.Clear();
+                _queueOverflow = false;
+            }
             IsConnected = false;
             Status = "disconnected";
         }

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bulk": 37,
+  "protocol": "reconnect-token rotation and renewed bearer SSE view",
+  "httpRoute": "POST /v1/dev/objective-session/reconnect",
+  "inputs": {
+    "authorization": "Bearer validated BazID access token",
+    "json": {
+      "playerId": "string",
+      "reconnectToken": "single-use ephemeral capability",
+      "lastRevision": "monotonic cursor"
+    }
+  },
+  "outputs": [
+    "new viewerToken",
+    "rotated reconnectToken",
+    "current server-owned objective snapshot",
+    "event catch-up cursor",
+    "resyncRequired"
+  ],
+  "invariants": [
+    "each reconnect validates a fresh trusted OIDC principal",
+    "cannot submit matchId, assignmentId, or joinCredential during reconnect",
+    "old reconnect token consumed after successful validation",
+    "reconnect tickets cannot grant scores or XP",
+    "viewerToken remains match-specific and short-lived",
+    "Unity SSE frames processed on main thread only",
+    "buffer overflow aborts stream"
+  ],
+  "productionPending": [
+    "real BazID issuer verification",
+    "rate-limiting and distributed session persistence",
+    "device and Unity Editor compile verification",
+    "multi-process durable token and session storage",
+    "TLS and real multiplayer server"
+  ]
+}
