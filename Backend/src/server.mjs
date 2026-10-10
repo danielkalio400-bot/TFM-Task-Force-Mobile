@@ -18,6 +18,9 @@ import { GameSessionService } from "./services/sessions.mjs";
 import { InventoryLedger } from "./services/inventory-ledger.mjs";
 import { MatchResultService } from "./services/match-results.mjs";
 import { ModerationService } from "./services/moderation.mjs";
+import { PrivateMatchService } from "./services/private-matches.mjs";
+import { RankedService } from "./services/ranked.mjs";
+import { handleCompetitive } from "./routes/competitive.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -37,6 +40,8 @@ export function makeServer() {
   const inventory = new InventoryLedger();
   const matchResults = new MatchResultService();
   const moderation = new ModerationService();
+  const privateMatches = new PrivateMatchService();
+  const ranked = new RankedService();
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -66,6 +71,8 @@ export function makeServer() {
         moderation: "local-report-intake",
         matchResults: "trusted-local-server-prototype",
         sessionRecovery: "local-in-memory-prototype",
+        privateMatches: "local-in-memory-prototype",
+        ranked: "local-in-memory-prototype",
         serverAllocation: "placeholder-only",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
@@ -85,6 +92,7 @@ export function makeServer() {
     if (await handleLiveServices(request, response, path, {
       sessions, inventory, matchResults, moderation
     })) return;
+    if (await handleCompetitive(request, response, path, { privateMatches, ranked })) return;
 
     return sendJson(response, 404, { error: "not_found" });
   });

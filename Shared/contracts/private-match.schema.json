@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/private-match.schema.json",
+  "title": "TFM Private Match Rules",
+  "type": "object",
+  "required": ["modeId", "privacy", "maxPlayers", "teamSize", "timeLimitSeconds"],
+  "properties": {
+    "modeId": { "type": "string", "minLength": 1 },
+    "privacy": { "enum": ["public", "friends", "invite-only", "private-code"] },
+    "maxPlayers": { "type": "integer", "minimum": 2, "maximum": 100 },
+    "teamSize": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "scoreLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "timeLimitSeconds": { "type": "integer", "minimum": 60, "maximum": 7200 },
+    "friendlyFire": { "type": "boolean" },
+    "allowBots": { "type": "boolean" },
+    "allowSpectators": { "type": "boolean" },
+    "allowJoinInProgress": { "type": "boolean" }
+  }
+}

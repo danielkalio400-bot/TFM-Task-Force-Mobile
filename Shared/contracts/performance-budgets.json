@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "entry-mobile",
+      "targetFps": 30,
+      "dynamicResolutionMin": 0.65,
+      "notes": "Reduced detail, conservative effects and measured memory budget."
+    },
+    {
+      "id": "mid-mobile",
+      "targetFps": 60,
+      "dynamicResolutionMin": 0.75,
+      "notes": "Stable frame pacing prioritized over peak effects."
+    },
+    {
+      "id": "high-mobile",
+      "targetFps": 60,
+      "dynamicResolutionMin": 0.85,
+      "notes": "Enhanced fidelity only after sustained thermal testing."
+    },
+    {
+      "id": "flagship-tablet",
+      "targetFps": 120,
+      "dynamicResolutionMin": 0.9,
+      "notes": "Optional high-refresh profile when hardware supports it."
+    },
+    {
+      "id": "windows",
+      "targetFps": 60,
+      "dynamicResolutionMin": 1.0,
+      "notes": "Scalable desktop profile with higher-quality presets."
+    }
+  ]
+}
