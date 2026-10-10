@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/regional-queue.schema.json",
+  "title": "TFM Regional Queue Entry",
+  "type": "object",
+  "required": ["playerId", "modeId", "region", "partySize", "skillRating"],
+  "properties": {
+    "playerId": { "type": "string", "minLength": 1 },
+    "modeId": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 2 },
+    "partySize": { "type": "integer", "minimum": 1, "maximum": 16 },
+    "skillRating": { "type": "integer", "minimum": 0 }
+  }
+}

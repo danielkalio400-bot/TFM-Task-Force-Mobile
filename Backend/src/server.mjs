@@ -26,6 +26,12 @@ import { ServerRegistry } from "./services/server-registry.mjs";
 import { ServerAssignmentService } from "./services/server-assignments.mjs";
 import { MapVoteService } from "./services/map-votes.mjs";
 import { PerformanceTelemetryService } from "./services/performance-telemetry.mjs";
+import { handleSessionOperations } from "./routes/session-operations.mjs";
+import { RegionalQueueService } from "./services/regional-queues.mjs";
+import { MatchSessionService } from "./services/match-sessions.mjs";
+import { ServerDrainService } from "./services/server-draining.mjs";
+import { IncidentService } from "./services/incidents.mjs";
+import { FairPlayService } from "./services/fairplay.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -51,6 +57,11 @@ export function makeServer() {
   const assignmentsV2 = new ServerAssignmentService(servers);
   const mapVotes = new MapVoteService();
   const performanceTelemetry = new PerformanceTelemetryService();
+  const regionalQueues = new RegionalQueueService();
+  const matchSessions = new MatchSessionService();
+  const serverDrains = new ServerDrainService();
+  const incidents = new IncidentService();
+  const fairPlay = new FairPlayService();
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -86,6 +97,10 @@ export function makeServer() {
         serverHealth: "local-heartbeat-prototype",
         mapVoting: "local-in-memory-prototype",
         performanceTelemetry: "local-aggregate-prototype",
+        regionalQueues: "local-in-memory-prototype",
+        matchSessionFlow: "local-in-memory-prototype",
+        serverDraining: "local-in-memory-prototype",
+        fairPlayReview: "local-signal-intake",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -110,6 +125,13 @@ export function makeServer() {
       assignments: assignmentsV2,
       mapVotes,
       telemetry: performanceTelemetry,
+    })) return;
+    if (await handleSessionOperations(request, response, path, {
+      queues: regionalQueues,
+      sessions: matchSessions,
+      drains: serverDrains,
+      incidents,
+      fairPlay,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/match-flow.schema.json",
+  "title": "TFM Match Flow State",
+  "type": "object",
+  "required": ["matchId", "modeId", "region", "phase"],
+  "properties": {
+    "matchId": { "type": "string", "minLength": 1 },
+    "modeId": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 2 },
+    "serverId": { "type": "string" },
+    "phase": {
+      "enum": ["lobby", "queueing", "server-assignment", "connecting", "warmup", "active", "results", "returning", "failed"]
+    }
+  }
+}
