@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "platforms": ["android", "ios", "windows"],
+  "requiredGates": [
+    "core-content",
+    "selected-map-readiness",
+    "backend-health",
+    "recovery",
+    "performance",
+    "qa"
+  ],
+  "rule": "A release candidate is blocked if any required gate fails; no map or platform is presumed ready from source metadata alone."
+}

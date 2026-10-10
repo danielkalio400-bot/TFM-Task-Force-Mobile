@@ -59,6 +59,11 @@ import { ContentCompatibilityService } from "./services/content-compatibility.mj
 import { MapReadinessService } from "./services/map-readiness.mjs";
 import { SessionPersistenceService } from "./services/session-persistence.mjs";
 import { SectionLifecycleService } from "./services/section-lifecycle.mjs";
+import { handleDeliveryReadiness } from "./routes/delivery-readiness.mjs";
+import { contentDeliveryContract, releaseReadinessContract } from "./delivery-contracts.mjs";
+import { ContentDeliveryService } from "./services/content-delivery.mjs";
+import { SectionLaunchService } from "./services/section-launch.mjs";
+import { ReleaseReadinessService } from "./services/release-readiness.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -107,12 +112,21 @@ export function makeServer() {
   const mapReadiness = new MapReadinessService(mapCatalog);
   const sessionPersistence = new SessionPersistenceService();
   const sectionLifecycles = new SectionLifecycleService();
+  const contentDelivery = new ContentDeliveryService(contentPackCatalog);
+  const releaseReadiness = new ReleaseReadinessService();
   const sectionSessions = new SectionSessionCoordinator({
     maps: mapCatalog,
     multiplayer: modeRuntime,
     battleRoyale: battleRoyaleRuntime,
     coop: coopRuntime,
     extraction: extractionRuntime,
+  });
+
+  const sectionLaunch = new SectionLaunchService({
+    compatibility,
+    mapReadiness,
+    lifecycles: sectionLifecycles,
+    sectionSessions,
   });
 
   matchResults.trustLocalServer("local-dev-server");
@@ -171,6 +185,9 @@ export function makeServer() {
         mapReadiness: "local-validation-metadata",
         sessionPersistence: "local-sequenced-snapshots",
         sectionLifecycle: "local-state-machine-prototype",
+        contentDelivery: "local-package-metadata-prototype",
+        sectionLaunch: "local-gated-orchestration-prototype",
+        releaseReadiness: "local-gate-evaluation",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -235,6 +252,15 @@ export function makeServer() {
       contracts: {
         compatibility: contentCompatibility,
         mapReadiness: mapReadinessContract,
+      },
+    })) return;
+    if (await handleDeliveryReadiness(request, response, path, {
+      delivery: contentDelivery,
+      launch: sectionLaunch,
+      release: releaseReadiness,
+      contracts: {
+        delivery: contentDeliveryContract,
+        release: releaseReadinessContract,
       },
     })) return;
 

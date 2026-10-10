@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "packageStateModel": [
+    "available",
+    "queued",
+    "downloading",
+    "verifying",
+    "ready",
+    "failed"
+  ],
+  "integrityRule": "Package metadata must carry a server-issued integrity tag before a package can be marked ready.",
+  "sizeRule": "Package byte sizes remain zero until real built assets are measured."
+}
