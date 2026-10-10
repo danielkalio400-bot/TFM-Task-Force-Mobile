@@ -18,6 +18,7 @@ namespace TFM.Player.Controls
         private bool _jumpQueued;
         private bool _fireQueued;
         private bool _reloadQueued;
+        private TFMGyroAimBridge _gyro;
 #if ENABLE_INPUT_SYSTEM
         private bool _enabledEnhancedTouch;
 #endif
@@ -28,6 +29,12 @@ namespace TFM.Player.Controls
         public bool SprintHeld { get; private set; }
         public bool FireHeld { get; private set; }
         public bool ReloadPressed { get; private set; }
+        public TFMInputDeviceKind ActiveDevice { get; private set; } = TFMInputDeviceKind.Unknown;
+
+        private void Awake()
+        {
+            _gyro = GetComponent<TFMGyroAimBridge>();
+        }
 
 #if ENABLE_INPUT_SYSTEM
         private void OnEnable()
@@ -48,20 +55,9 @@ namespace TFM.Player.Controls
         }
 #endif
 
-        public void QueueJump()
-        {
-            _jumpQueued = true;
-        }
-
-        public void QueueFire()
-        {
-            _fireQueued = true;
-        }
-
-        public void QueueReload()
-        {
-            _reloadQueued = true;
-        }
+        public void QueueJump() => _jumpQueued = true;
+        public void QueueFire() => _fireQueued = true;
+        public void QueueReload() => _reloadQueued = true;
 
         private void Update()
         {
@@ -77,6 +73,12 @@ namespace TFM.Player.Controls
 #elif ENABLE_LEGACY_INPUT_MANAGER
             ReadLegacyInput(ref move, ref look, ref jump, ref sprint, ref fire, ref reload);
 #endif
+
+            if (_gyro != null && _gyro.IsAvailable && _gyro.LookDelta.sqrMagnitude > 0.000001f)
+            {
+                look += _gyro.LookDelta;
+                ActiveDevice = TFMInputDeviceKind.Touch;
+            }
 
             Move = Vector2.ClampMagnitude(move, 1f);
             Look = look;
@@ -105,20 +107,61 @@ namespace TFM.Player.Controls
                                    ReadAxis(keyboard.leftArrowKey.isPressed, keyboard.rightArrowKey.isPressed);
                 float vertical = ReadAxis(keyboard.sKey.isPressed, keyboard.wKey.isPressed) +
                                  ReadAxis(keyboard.downArrowKey.isPressed, keyboard.upArrowKey.isPressed);
-                move = Vector2.ClampMagnitude(new Vector2(horizontal, vertical), 1f);
-                jump = keyboard.spaceKey.wasPressedThisFrame;
-                sprint = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
-                reload = keyboard.rKey.wasPressedThisFrame;
+
+                Vector2 keyboardMove = Vector2.ClampMagnitude(new Vector2(horizontal, vertical), 1f);
+                bool keyboardUsed = keyboardMove.sqrMagnitude > 0f ||
+                                    keyboard.spaceKey.wasPressedThisFrame ||
+                                    keyboard.leftShiftKey.isPressed ||
+                                    keyboard.rightShiftKey.isPressed ||
+                                    keyboard.rKey.wasPressedThisFrame;
+                if (keyboardUsed)
+                {
+                    move = keyboardMove;
+                    ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
+                }
+
+                jump |= keyboard.spaceKey.wasPressedThisFrame;
+                sprint |= keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+                reload |= keyboard.rKey.wasPressedThisFrame;
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse != null && mouse.rightButton.isPressed)
-            {
-                look = mouse.delta.ReadValue();
-            }
             if (mouse != null)
             {
-                fire = mouse.leftButton.isPressed;
+                if (mouse.rightButton.isPressed)
+                {
+                    look = mouse.delta.ReadValue();
+                    ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
+                }
+
+                if (mouse.leftButton.isPressed)
+                {
+                    fire = true;
+                    ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
+                }
+            }
+
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad != null)
+            {
+                Vector2 padMove = gamepad.leftStick.ReadValue();
+                Vector2 padLook = gamepad.rightStick.ReadValue();
+                bool padUsed = padMove.sqrMagnitude > 0.0025f ||
+                               padLook.sqrMagnitude > 0.0025f ||
+                               gamepad.buttonSouth.wasPressedThisFrame ||
+                               gamepad.rightTrigger.ReadValue() > 0.2f ||
+                               gamepad.buttonWest.wasPressedThisFrame;
+
+                if (padUsed)
+                {
+                    move = padMove;
+                    look = padLook * 12f;
+                    jump |= gamepad.buttonSouth.wasPressedThisFrame;
+                    sprint |= gamepad.leftStickButton.isPressed;
+                    fire |= gamepad.rightTrigger.ReadValue() > 0.5f;
+                    reload |= gamepad.buttonWest.wasPressedThisFrame;
+                    ActiveDevice = TFMInputDeviceKind.Controller;
+                }
             }
 
             ReadEnhancedTouches(ref move, ref look);
@@ -151,6 +194,7 @@ namespace TFM.Player.Controls
                     else
                     {
                         move = Vector2.ClampMagnitude((position - _leftStart) / TouchRadius(), 1f);
+                        ActiveDevice = TFMInputDeviceKind.Touch;
                     }
                 }
                 else if (finger == _rightFinger)
@@ -163,18 +207,13 @@ namespace TFM.Player.Controls
                     else
                     {
                         look = touch.delta;
+                        ActiveDevice = TFMInputDeviceKind.Touch;
                     }
                 }
             }
 
-            if (_leftFinger >= 0 && !leftSeen)
-            {
-                _leftFinger = -1;
-            }
-            if (_rightFinger >= 0 && !rightSeen)
-            {
-                _rightFinger = -1;
-            }
+            if (_leftFinger >= 0 && !leftSeen) _leftFinger = -1;
+            if (_rightFinger >= 0 && !rightSeen) _rightFinger = -1;
         }
 #endif
 
@@ -194,9 +233,15 @@ namespace TFM.Player.Controls
             fire = Input.GetMouseButton(0);
             reload = Input.GetKeyDown(KeyCode.R);
 
+            if (move.sqrMagnitude > 0f || jump || sprint || fire || reload)
+            {
+                ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
+            }
+
             if (Input.GetMouseButton(1))
             {
                 look = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * 12f;
+                ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
             }
 
             bool leftSeen = false;
@@ -216,37 +261,27 @@ namespace TFM.Player.Controls
                 if (finger == _leftFinger)
                 {
                     leftSeen = true;
-                    if (ended)
-                    {
-                        _leftFinger = -1;
-                    }
+                    if (ended) _leftFinger = -1;
                     else
                     {
                         move = Vector2.ClampMagnitude((touch.position - _leftStart) / TouchRadius(), 1f);
+                        ActiveDevice = TFMInputDeviceKind.Touch;
                     }
                 }
                 else if (finger == _rightFinger)
                 {
                     rightSeen = true;
-                    if (ended)
-                    {
-                        _rightFinger = -1;
-                    }
+                    if (ended) _rightFinger = -1;
                     else
                     {
                         look = touch.deltaPosition;
+                        ActiveDevice = TFMInputDeviceKind.Touch;
                     }
                 }
             }
 
-            if (_leftFinger >= 0 && !leftSeen)
-            {
-                _leftFinger = -1;
-            }
-            if (_rightFinger >= 0 && !rightSeen)
-            {
-                _rightFinger = -1;
-            }
+            if (_leftFinger >= 0 && !leftSeen) _leftFinger = -1;
+            if (_rightFinger >= 0 && !rightSeen) _rightFinger = -1;
         }
 #endif
 
@@ -277,11 +312,7 @@ namespace TFM.Player.Controls
 
         private static float TouchRadius()
         {
-            if (Screen.dpi <= 0f)
-            {
-                return DefaultTouchRadius;
-            }
-
+            if (Screen.dpi <= 0f) return DefaultTouchRadius;
             return Mathf.Clamp(Screen.dpi * 0.55f, 80f, 180f);
         }
     }

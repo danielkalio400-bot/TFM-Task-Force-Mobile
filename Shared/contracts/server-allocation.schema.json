@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/server-allocation.schema.json",
+  "title": "TFM Server Allocation",
+  "type": "object",
+  "required": ["allocationId", "matchId", "region", "state"],
+  "properties": {
+    "allocationId": { "type": "string", "minLength": 1 },
+    "matchId": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 2 },
+    "state": { "enum": ["pending", "ready", "failed", "released"] }
+  }
+}

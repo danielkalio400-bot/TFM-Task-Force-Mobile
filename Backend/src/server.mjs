@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { sendJson } from "./http/json.mjs";
 import { handleMatchmaking } from "./routes/matchmaking.mjs";
+import { handleLobbies } from "./routes/lobbies.mjs";
+import { handleAllocations } from "./routes/allocations.mjs";
 import { MatchmakingService } from "./services/matchmaking.mjs";
+import { LobbyService } from "./services/lobbies.mjs";
+import { AllocationService } from "./services/allocations.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -16,6 +20,8 @@ const platformTargets = JSON.parse(
 export function makeServer() {
   const sectionIds = modeCatalog.sections.map(section => section.id);
   const matchmaking = new MatchmakingService(sectionIds);
+  const lobbies = new LobbyService();
+  const allocations = new AllocationService();
 
   return createServer(async (request, response) => {
     const path = (request.url || "").split("?")[0];
@@ -35,6 +41,8 @@ export function makeServer() {
         authentication: "not-implemented",
         multiplayerTransport: "not-implemented",
         matchmaking: "local-in-memory-prototype",
+        lobbies: "local-in-memory-prototype",
+        serverAllocation: "placeholder-only",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -47,9 +55,9 @@ export function makeServer() {
       return sendJson(response, 200, platformTargets);
     }
 
-    if (await handleMatchmaking(request, response, path, matchmaking)) {
-      return;
-    }
+    if (await handleLobbies(request, response, path, lobbies)) return;
+    if (await handleMatchmaking(request, response, path, matchmaking)) return;
+    if (await handleAllocations(request, response, path, allocations)) return;
 
     return sendJson(response, 404, { error: "not_found" });
   });
