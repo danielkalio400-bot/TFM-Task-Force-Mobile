@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/server-assignment.schema.json",
+  "title": "TFM Server Assignment",
+  "type": "object",
+  "required": ["assignmentId", "matchId", "serverId", "region", "endpoint", "joinCredential", "expiresAt"],
+  "properties": {
+    "assignmentId": { "type": "string", "minLength": 1 },
+    "matchId": { "type": "string", "minLength": 1 },
+    "serverId": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 2 },
+    "endpoint": { "type": "string", "minLength": 1 },
+    "joinCredential": { "type": "string", "minLength": 20 },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tfm.invalid/contracts/server-heartbeat.schema.json",
+  "title": "TFM Server Heartbeat",
+  "type": "object",
+  "required": ["serverId", "region", "health", "playerCount", "capacity"],
+  "properties": {
+    "serverId": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 2 },
+    "health": { "enum": ["starting", "ready", "degraded", "draining", "offline"] },
+    "playerCount": { "type": "integer", "minimum": 0 },
+    "capacity": { "type": "integer", "minimum": 1 },
+    "endpoint": { "type": "string", "minLength": 1 }
+  }
+}

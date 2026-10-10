@@ -21,6 +21,11 @@ import { ModerationService } from "./services/moderation.mjs";
 import { PrivateMatchService } from "./services/private-matches.mjs";
 import { RankedService } from "./services/ranked.mjs";
 import { handleCompetitive } from "./routes/competitive.mjs";
+import { handleOperations } from "./routes/operations.mjs";
+import { ServerRegistry } from "./services/server-registry.mjs";
+import { ServerAssignmentService } from "./services/server-assignments.mjs";
+import { MapVoteService } from "./services/map-votes.mjs";
+import { PerformanceTelemetryService } from "./services/performance-telemetry.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -42,6 +47,10 @@ export function makeServer() {
   const moderation = new ModerationService();
   const privateMatches = new PrivateMatchService();
   const ranked = new RankedService();
+  const servers = new ServerRegistry();
+  const assignmentsV2 = new ServerAssignmentService(servers);
+  const mapVotes = new MapVoteService();
+  const performanceTelemetry = new PerformanceTelemetryService();
 
   matchResults.trustLocalServer("local-dev-server");
 
@@ -73,7 +82,10 @@ export function makeServer() {
         sessionRecovery: "local-in-memory-prototype",
         privateMatches: "local-in-memory-prototype",
         ranked: "local-in-memory-prototype",
-        serverAllocation: "placeholder-only",
+        serverAllocation: "local-registry-prototype",
+        serverHealth: "local-heartbeat-prototype",
+        mapVoting: "local-in-memory-prototype",
+        performanceTelemetry: "local-aggregate-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -93,6 +105,12 @@ export function makeServer() {
       sessions, inventory, matchResults, moderation
     })) return;
     if (await handleCompetitive(request, response, path, { privateMatches, ranked })) return;
+    if (await handleOperations(request, response, path, {
+      servers,
+      assignments: assignmentsV2,
+      mapVotes,
+      telemetry: performanceTelemetry,
+    })) return;
 
     return sendJson(response, 404, { error: "not_found" });
   });
