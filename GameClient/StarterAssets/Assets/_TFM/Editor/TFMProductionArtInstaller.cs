@@ -77,16 +77,62 @@ namespace TFM.Editor
             Scene scene = SceneManager.GetActiveScene();
             if (!scene.isLoaded || scene.path != ScenePath)
                 throw new InvalidOperationException("Open the saved TFM Training Yard first.");
+            TFMProductionArtProfile profile = LoadProfile();
             TFMThirdPersonMotor[] players = Find<TFMThirdPersonMotor>(scene);
             TFMTargetDummy[] targets = Find<TFMTargetDummy>(scene);
             Transform arena = Find<Transform>(scene)
                 .FirstOrDefault(t => t.name == "Training Yard");
-            if (players.Length != 1 || targets.Length != 3 || arena == null ||
-                players[0].transform.Find("TFM Production Operator") == null ||
-                arena.Find("TFM Production Environment") == null ||
-                targets.Any(t => t.transform.Find("TFM Production Practice Target") == null))
-                throw new InvalidOperationException("Production prefabs are incomplete. This is not an art-ready scene.");
-            Debug.Log("TFM art references present. Manual visual, collider and device QA is still required.");
+            if (players.Length != 1 || targets.Length != 3 || arena == null)
+                throw new InvalidOperationException("Training Yard actor anchors are incomplete.");
+
+            VerifyInstalled(players[0].transform.Find("TFM Production Operator"),
+                profile.OperatorPrefab, "operator", false, true);
+            VerifyInstalled(arena.Find("TFM Production Environment"),
+                profile.EnvironmentPrefab, "environment", true, false);
+            foreach (TFMTargetDummy target in targets)
+                VerifyInstalled(target.transform.Find("TFM Production Practice Target"),
+                    profile.PracticeTargetPrefab, "practice target", true, false);
+
+            if (players[0].transform.Find("Player Visual")?.gameObject.activeSelf == true ||
+                targets.Any(target =>
+                    target.transform.Find("Body")?.gameObject.activeSelf == true ||
+                    target.transform.Find("Head")?.gameObject.activeSelf == true))
+                throw new InvalidOperationException(
+                    "Original player or practice-target blockout visuals are still active.");
+
+            Debug.Log("TFM imported art instances, visible meshes, humanoid controller and physical colliders validated. Human review and hardware profiling remain required.");
+        }
+
+        // Audit the installed prefab instance rather than an unrelated renamed object.
+        private static void VerifyInstalled(Transform instance, GameObject expected,
+            string label, bool requireCollider, bool requireHumanoid)
+        {
+            if (instance == null || !instance.gameObject.activeInHierarchy)
+                throw new InvalidOperationException("Missing or inactive production " + label);
+            GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(instance.gameObject);
+            if (expected == null || source != expected)
+                throw new InvalidOperationException(
+                    "Production " + label + " is not an instance of the assigned prefab.");
+
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            if (!renderers.Any(renderer =>
+                renderer != null && renderer.enabled && renderer.gameObject.activeInHierarchy))
+                throw new InvalidOperationException(
+                    "Production " + label + " has no active visible renderers.");
+
+            if (requireCollider && !instance.GetComponentsInChildren<Collider>(true)
+                .Any(collider => collider != null && collider.enabled &&
+                    collider.gameObject.activeInHierarchy && !collider.isTrigger))
+                throw new InvalidOperationException(
+                    "Production " + label + " needs an enabled non-trigger physical collider.");
+
+            if (requireHumanoid && !instance.GetComponentsInChildren<Animator>(true)
+                .Any(animator => animator != null && animator.enabled &&
+                    animator.gameObject.activeInHierarchy &&
+                    animator.avatar != null && animator.avatar.isHuman &&
+                    animator.runtimeAnimatorController != null))
+                throw new InvalidOperationException(
+                    "Production " + label + " needs an enabled Humanoid Animator with a controller.");
         }
 
         private static T[] Find<T>(Scene scene) where T : Component =>
