@@ -258,6 +258,7 @@ Player/Movement/TFMThirdPersonMotor.cs
 Player/State/TFMPlayerLifeState.cs
 Player/State/TFMPlayerSessionState.cs
 Presentation/TFMProductionArtProfile.cs
+Presentation/TFMOperatorMotionBridge.cs
 Profile/TFMPlayerProfileRecord.cs
 Profile/TFMProfileAuditEntry.cs
 Profile/TFMProfileLifecycleState.cs

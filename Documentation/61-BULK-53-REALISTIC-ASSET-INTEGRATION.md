@@ -14,7 +14,7 @@
 
 ## Art authoring / acceptance criteria
 
-Create an original, realistic military operator with humanoid rig, suitable Animator controller and clips. Create a full physical training environment that matches original gameplay-scale anchor positions (30 m footprint, spawn near z=-7 m and target locations around x=-4/0/4, z=-1 m), with grounded lighting, LODs and colliders. Practice targets are non-character physical range targets. Production prefabs may have any internally authored mesh/renderer hierarchy; the editor places one instance under each anchor.
+Create an original, realistic military operator with an imported Humanoid Avatar rig, Animator controller and locomotion clips. The runtime bridge writes normalized **Speed**, **IsMoving**, and **Grounded** parameters only if they exist in the authored Animator controller. Create a full physical training environment that matches original gameplay-scale anchor positions (30 m footprint, spawn near z=-7 m and target locations around x=-4/0/4, z=-1 m), with grounded lighting, LODs and colliders. Practice targets are non-character physical range targets. Production prefabs may have any internally authored mesh/renderer hierarchy; the editor places one instance under each anchor.
 
 In the Unity Editor: visually inspect orientation, camera occlusion, material render pipeline, physical collision, hit detection, target respawn, and all authored animated states. Profile on Android, iOS and Windows hardware; stable frame pacing and thermal constraints take precedence over maximal polygon count.
 

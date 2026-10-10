@@ -21,6 +21,8 @@ test("TFM production art requires imported physical prefabs and does not fabrica
   assert.match(editor, /players\.Length != 1 \|\| targets\.Length != 3/);
   assert.match(editor, /target\.transform\.Find\("Body"\)/);
   assert.match(editor, /target\.transform\.Find\("Head"\)/);
-  for (const path of ["Presentation/TFMProductionArtProfile.cs", "Editor/TFMProductionArtInstaller.cs"])
+  assert.match(editor, /avatar\.isHuman/);
+  assert.match(editor, /Undo\.AddComponent<TFMOperatorMotionBridge>/);
+  for (const path of ["Presentation/TFMProductionArtProfile.cs", "Presentation/TFMOperatorMotionBridge.cs", "Editor/TFMProductionArtInstaller.cs"])
     assert.equal(manifest.split(/\r?\n/).filter(s => s === path).length, 1);
 });

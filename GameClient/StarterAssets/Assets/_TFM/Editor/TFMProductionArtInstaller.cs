@@ -28,6 +28,9 @@ namespace TFM.Editor
 
             TFMProductionArtProfile profile = LoadProfile();
             ValidatePrefab(profile.OperatorPrefab, "operator", false);
+            if (!profile.OperatorPrefab.GetComponentsInChildren<Animator>(true)
+                .Any(animator => animator.avatar != null && animator.avatar.isHuman))
+                throw new InvalidOperationException("Operator requires a rigged Humanoid Avatar and Animator.");
             ValidatePrefab(profile.EnvironmentPrefab, "environment", true);
             ValidatePrefab(profile.PracticeTargetPrefab, "practice target", true);
 
@@ -39,8 +42,12 @@ namespace TFM.Editor
                 throw new InvalidOperationException("Expected one player, three practice targets and a Training Yard. No changes made.");
 
             // All validation happens before any modification to the authored scene.
-            PlacePrefab(profile.OperatorPrefab, players[0].transform,
+            GameObject avatar = PlacePrefab(profile.OperatorPrefab, players[0].transform,
                 "TFM Production Operator");
+            TFMOperatorMotionBridge motion = avatar.GetComponent<TFMOperatorMotionBridge>();
+            if (motion == null) motion = Undo.AddComponent<TFMOperatorMotionBridge>(avatar);
+            Undo.RecordObject(motion, "Bind TFM operator motion");
+            motion.Configure(players[0].transform);
             HideLegacy(players[0].transform.Find("Player Visual"));
 
             PlacePrefab(profile.EnvironmentPrefab, arena, "TFM Production Environment");
@@ -110,10 +117,10 @@ namespace TFM.Editor
                 throw new InvalidOperationException(label + " must contain functional colliders.");
         }
 
-        private static void PlacePrefab(GameObject prefab, Transform parent, string name)
+        private static GameObject PlacePrefab(GameObject prefab, Transform parent, string name)
         {
             // Do not overwrite locally adjusted or artist-authored prefab instances.
-            if (parent.Find(name) != null) return;
+            if (parent.Find(name) != null) return parent.Find(name).gameObject;
             GameObject instance = PrefabUtility.InstantiatePrefab(prefab, parent.gameObject.scene)
                 as GameObject;
             if (instance == null)
@@ -124,6 +131,7 @@ namespace TFM.Editor
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
             instance.transform.localScale = Vector3.one;
+            return instance;
         }
 
         private static void HideLegacy(Transform legacy)
