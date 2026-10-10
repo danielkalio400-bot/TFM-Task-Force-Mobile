@@ -1,4 +1,7 @@
 import { createServer } from "node:http";
+import { ServerObjectiveRoundsService } from "./services/server-objective-rounds.mjs";
+import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
+import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -162,6 +165,9 @@ export function makeServer() {
   const reconnectRestores = new ReconnectRestoreService();
   const operationsHealth = new OperationsHealthService({ servers, incidents });
   const modeRuntime = new ModeRuntimeService();
+  const serverObjectiveRounds = new ServerObjectiveRoundsService({
+    trustedServerIds: ["local-dev-server"]
+  });
   const partyQueue = new PartyQueueCoordinator({ parties, queues: regionalQueues });
   const resultPipeline = new ResultPipelineService({ matchResults, rewards, profiles });
   const liveOperations = new LiveOperationsService();
@@ -490,6 +496,10 @@ export function makeServer() {
     if (await handleReleaseObservability(request, response, path, {
       quality: releaseObservability,
       contract: releaseObservabilityRuntime,
+    })) return;
+    if (await handleServerObjectiveRounds(request, response, path, {
+      rounds: serverObjectiveRounds,
+      contract: serverObjectiveRoundsContract,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });

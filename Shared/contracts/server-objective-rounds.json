@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "bulk": 33,
+  "engine": "Unity 6 URP",
+  "purpose": "Dedicated-server objective-round authority boundary",
+  "phaseStates": [
+    "warmup",
+    "active",
+    "completed",
+    "expired",
+    "cancelled"
+  ],
+  "teams": [
+    "alpha",
+    "bravo"
+  ],
+  "objectives": "Server-validated capture events on preconfigured objectives",
+  "sessionRules": {
+    "minPlayers": 2,
+    "maxPlayers": 64,
+    "matchIdUnique": true,
+    "timeLimitRangeMs": [
+      30000,
+      3600000
+    ],
+    "scoreLimitMax": 1000
+  },
+  "integrity": {
+    "clientScoreSubmission": false,
+    "restWriteEndpoints": false,
+    "progressionGrants": false,
+    "archivedResults": false,
+    "trustedAdapterOnly": true,
+    "eventSequenceMonotonic": true,
+    "replayIdempotent": true
+  },
+  "deltaTransport": {
+    "readEndpoint": "/v1/dev/objective-rounds/:matchId/events",
+    "afterSequence": "last received sequence",
+    "revision": "monotonic state version",
+    "retentionLimit": 2048,
+    "delivery": "polling only; dedicated real-time transport not built"
+  },
+  "requiredNext": [
+    "dedicated server process with signed service identity",
+    "server physics for valid captures",
+    "authenticated matchmaking enrollment",
+    "durable archive integration after validated proof",
+    "real-time transport and reconnect snapshot",
+    "Unity client bridge and on-device testing"
+  ],
+  "notes": "Local testing authority is not production authentication. No user HTTP endpoint can submit scoring."
+}
