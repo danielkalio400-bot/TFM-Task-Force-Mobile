@@ -100,3 +100,7 @@ Mobile controls:
 This is the first local gameplay prototype. It includes target-range combat,
 but authentication, networking, progression, final art and multiplayer remain
 separate milestones.
+
+## Realistic art replacement (Bulk 53)
+
+Import original/licensed URP prefabs, create a **TFM Production Art Profile** via Assets > Create, assign operator, environment and physical practice target prefabs, then open the saved Training Yard and use **TFM > Production Art > Apply Imported Prefabs**. The installer retains the existing gameplay systems, disables prototype visual objects, uses Undo and leaves the scene unsaved for review. See `Documentation/61-BULK-53-REALISTIC-ASSET-INTEGRATION.md` for colliders, rigging and verification. Code changes alone do not provide realistic meshes.

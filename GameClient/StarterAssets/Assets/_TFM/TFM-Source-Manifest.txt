@@ -23,6 +23,7 @@ Core/Events/TFMEventBus.cs
 Core/Services/TFMServiceRegistry.cs
 Editor/TFMPlayableDemoBatchBuild.cs
 Editor/TFMTrainingSceneBuilder.cs
+Editor/TFMProductionArtInstaller.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs
@@ -256,6 +257,7 @@ Player/Controls/TFMPlayerInput.cs
 Player/Movement/TFMThirdPersonMotor.cs
 Player/State/TFMPlayerLifeState.cs
 Player/State/TFMPlayerSessionState.cs
+Presentation/TFMProductionArtProfile.cs
 Profile/TFMPlayerProfileRecord.cs
 Profile/TFMProfileAuditEntry.cs
 Profile/TFMProfileLifecycleState.cs
