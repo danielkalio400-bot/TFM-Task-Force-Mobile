@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "bulk": 43,
+  "scope": "dedicated objective pre-mutation concurrency validation and read-only operator consistency",
+  "preflight": [
+    "match checkpoint sequence matches last bridge checkpoint",
+    "objective round ID and revision match tracked state",
+    "unknown already-open round requires explicit trusted handoff",
+    "missing or mismatched state denies before begin, capture, close, tick"
+  ],
+  "integrityStatuses": [
+    "consistent",
+    "authority_conflict",
+    "phase_conflict",
+    "terminal_conflict"
+  ],
+  "leaksCredentials": false,
+  "awardsProgression": false,
+  "limitations": [
+    "synchronous per-process authority only",
+    "no transactional rollback across persistent database",
+    "no gameplay server physics",
+    "no new bridge handoff or process recovery protocol",
+    "no Unity game build"
+  ]
+}

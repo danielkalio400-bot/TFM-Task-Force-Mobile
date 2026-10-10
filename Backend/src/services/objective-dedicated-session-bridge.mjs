@@ -81,7 +81,28 @@ export class ObjectiveDedicatedSessionBridge {
         lastRevision:current.revision,lastSessionSequence:save.snapshot.sequence});
       return {ok:true,snapshot:current,sessionSnapshot:save.snapshot};
     };
+    // Preflight must run BEFORE mutating the authoritative round.
+    // The previous version detected a stale checkpoint only AFTER a capture,
+    // allowing scoreboard and session state to diverge.
+    const preflight=(matchId,session)=>{
+      const prior=this.#bound.get(matchId);
+      const current=this.#rounds.snapshot(matchId);
+      if(prior){
+        if(session.sequence!==prior.lastSessionSequence)
+          return invalid("objective_session_out_of_sync");
+        if(!current || current.roundId!==prior.roundId ||
+           current.revision!==prior.lastRevision)
+          return invalid("objective_round_out_of_sync");
+      } else if(current){
+        // A new bridge cannot silently take over an already-open round;
+        // recovery/handoff needs an explicit trusted reconciliation policy.
+        return invalid("objective_round_handoff_required");
+      }
+      return {ok:true};
+    };
     const apply=(matchId,fn)=>invoke(matchId,(session,adapter)=>{
+      const ready=preflight(matchId,session);
+      if(!ready.ok)return ready;
       const done=fn(adapter,session);
       if(!done.ok)return done;
       // A replay or a no-op server clock tick may not increment the
