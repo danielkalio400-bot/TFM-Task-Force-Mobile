@@ -19,11 +19,36 @@ export class ServerObjectiveRoundsService {
   #trusted = new Set();
   #clock;
   #eventLimit;
+  #maxRounds;
+  #maxRequestRecords;
 
-  constructor({ trustedServerIds = [], clock = () => Date.now(), eventLimit = 2048 } = {}) {
+  constructor({ trustedServerIds = [], clock = () => Date.now(),
+    eventLimit = 2048, maxRounds = 512, maxRequestRecords = 4096 } = {}) {
+    if(!Number.isSafeInteger(eventLimit) || eventLimit<1 || eventLimit>20000 ||
+       !Number.isSafeInteger(maxRounds) || maxRounds<1 || maxRounds>10000 ||
+       !Number.isSafeInteger(maxRequestRecords) ||
+       maxRequestRecords<2 || maxRequestRecords>100000)
+      throw new Error("invalid_objective_capacity_configuration");
     this.#trusted = new Set(trustedServerIds);
     this.#clock = clock;
     this.#eventLimit = eventLimit;
+    this.#maxRounds = maxRounds;
+    this.#maxRequestRecords = maxRequestRecords;
+  }
+
+  diagnostics() {
+    let active=0,terminal=0,requestRecords=0,eventRecords=0;
+    for(const round of this.#rounds.values()) {
+      if(["completed","expired","cancelled"].includes(round.phase))
+        terminal++;
+      else active++;
+      requestRecords+=round.applied.size;
+      eventRecords+=round.events.length;
+    }
+    // Operational counts only, never player IDs, server credentials or roster.
+    return Object.freeze({rounds:this.#rounds.size,active,terminal,
+      requestRecords,eventRecords,maxRounds:this.#maxRounds,
+      maxRequestRecords:this.#maxRequestRecords});
   }
 
   createServerAdapter(serverId) {
@@ -67,6 +92,10 @@ export class ServerObjectiveRoundsService {
       return rejected("invalid_server_objective_round");
     const existing = this.#rounds.get(matchId);
     if (existing) return rejected("match_already_exists");
+    // Match IDs are not recycled during this process lifetime: this avoids
+    // old viewer/reconnect capabilities ever attaching to a different round.
+    if (this.#rounds.size >= this.#maxRounds)
+      return rejected("objective_round_capacity");
     const now = this.#timestamp();
     const state = {
       roundId: randomUUID(), matchId, mapId, serverId, phase: "warmup",
@@ -114,6 +143,8 @@ export class ServerObjectiveRoundsService {
     const duplicate=this.#dedupe(round,requestId,"begin");
     if (duplicate) return duplicate;
     if (round.phase !== "warmup") return rejected("round_not_in_warmup");
+    if(round.applied.size >= this.#maxRequestRecords)
+      return rejected("objective_request_capacity");
     round.phase="active";
     round.startedAtMs=this.#timestamp();
     round.applied.set(requestId,{fingerprint:"begin"});
@@ -141,6 +172,8 @@ export class ServerObjectiveRoundsService {
     // farm points by repeatedly reporting the same team at one objective.
     if(round.objectiveOwners[objectiveId]===player.teamId)
       return rejected("objective_already_controlled");
+    if(round.applied.size >= this.#maxRequestRecords)
+      return rejected("objective_request_capacity");
     round.objectiveOwners[objectiveId]=player.teamId;
     // Points are issued only by an already trusted server's event adapter.
     // Movement, trigger proof and collision still need real server physics.

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "bulk": 41,
+  "scope": "in-process server instance heartbeat and match authority capacity",
+  "lease": {
+    "defaultMs": 30000,
+    "minimumMs": 1000,
+    "maximumMs": 600000,
+    "renewal": "must arrive before expiration",
+    "scope": "one match and one verified server principal",
+    "rechecksIdentity": true,
+    "expiration": "irreversible for a registered match within monitor process",
+    "sweep": "host-scheduled, attempts trusted close and terminal persistence"
+  },
+  "capacity": {
+    "maxRoundInstancesDefault": 512,
+    "maxRequestRecordsPerRoundDefault": 4096,
+    "maxTrackedLeaseMatchesDefault": 512,
+    "terminalRounds": "retained to prevent match ID reuse",
+    "overCapacity": "reject rather than discard idempotency history"
+  },
+  "security": {
+    "clientReceivesServerSession": false,
+    "playerCanSendScores": false,
+    "untrustedRevokedPrincipals": "rejected",
+    "progression": "not awarded"
+  },
+  "limitations": [
+    "no production dedicated server certificate validation",
+    "no real collision/physics",
+    "no process-independent lease cluster",
+    "no durable server failure ledger",
+    "no automatic wall-clock scheduler",
+    "no Unity build/device QA"
+  ]
+}

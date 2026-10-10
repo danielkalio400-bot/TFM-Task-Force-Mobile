@@ -11,6 +11,7 @@ import { objectiveLiveContract } from "./objective-live-contracts.mjs";
 import { objectiveReconnectRotationContract } from "./objective-reconnect-rotation-contracts.mjs";
 import { objectiveDedicatedContract } from "./objective-dedicated-contracts.mjs";
 import { objectiveControlContract } from "./objective-control-contracts.mjs";
+import { objectiveServerLeaseContract } from "./objective-server-lease-contracts.mjs";
 import { handleServerObjectiveRounds } from "./routes/server-objective-rounds.mjs";
 import { serverObjectiveRoundsContract } from "./server-objective-contracts.mjs";
 import { objectiveReconnectContract } from "./objective-reconnect-contracts.mjs";
@@ -523,6 +524,8 @@ export function makeServer() {
       quality: releaseObservability,
       contract: releaseObservabilityRuntime,
     })) return;
+    if(request.method==="GET" && path==="/v1/runtime/objective-server-lease-monitor")
+      return sendJson(response,200,objectiveServerLeaseContract);
     if(request.method==="GET" && path==="/v1/runtime/objective-control-integrity")
       return sendJson(response,200,objectiveControlContract);
     if(request.method==="GET" && path==="/v1/runtime/objective-dedicated-session-bridge")
