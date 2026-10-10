@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "bulk": 39,
+  "scope": "authoritative objective ownership and session checkpoint idempotency",
+  "objectiveControl": {
+    "ownership": "server-owned per objective",
+    "initial": null,
+    "allowedTransition": "uncontrolled to team, or opposing-team recapture",
+    "sameTeamRepeat": "reject without score or revision",
+    "requestIdConflict": "reject",
+    "clientScoreRequests": "forbidden"
+  },
+  "snapshots": {
+    "ownershipMap": "objectiveOwners",
+    "unityArray": "controlledObjectives",
+    "eventSequence": "monotonic",
+    "resultProgression": false
+  },
+  "persistence": {
+    "noopServerTick": "does not generate checkpoint",
+    "exactRequestReplay": "does not generate checkpoint",
+    "terminalTransition": "persists terminal snapshot"
+  },
+  "limitations": [
+    "no collision physics in this repository",
+    "production service identity unavailable",
+    "no ranked rewards",
+    "no production game server binary"
+  ]
+}

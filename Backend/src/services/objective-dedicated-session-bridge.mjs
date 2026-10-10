@@ -79,11 +79,15 @@ export class ObjectiveDedicatedSessionBridge {
     const apply=(matchId,fn)=>invoke(matchId,(session,adapter)=>{
       const done=fn(adapter,session);
       if(!done.ok)return done;
-      // A replay is already in the canonical scoreboard. Do not write a
-      // duplicate session checkpoint or increment persisted sequence.
-      if(done.replay)return {ok:true,replay:true,
-        snapshot:this.#rounds.snapshot(matchId),
-        sessionSnapshot:this.#persistence.latest(matchId)};
+      // A replay or a no-op server clock tick may not increment the
+      // persisted session sequence. Sync terminal phase on real changes.
+      const prior=this.#bound.get(matchId);
+      const current=this.#rounds.snapshot(matchId);
+      if(done.replay || (prior && current &&
+         prior.roundId===current.roundId &&
+         prior.lastRevision===current.revision))
+        return {ok:true,replay:Boolean(done.replay),unchanged:!done.replay,
+          snapshot:current,sessionSnapshot:this.#persistence.latest(matchId)};
       const saved=persist(matchId,session);
       return saved.ok?{...saved,replay:false}:saved;
     });

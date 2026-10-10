@@ -72,6 +72,7 @@ export class ServerObjectiveRoundsService {
       roundId: randomUUID(), matchId, mapId, serverId, phase: "warmup",
       players: players.map(p => ({ playerId:p.playerId, teamId:p.teamId })),
       objectives: [...objectiveIds], scores: { alpha:0, bravo:0 },
+      objectiveOwners: Object.fromEntries(objectiveIds.map(id=>[id,null])),
       maxPoints, durationMs, createdAtMs:now, startedAtMs:null, endedAtMs:null,
       winningTeamId:null, revision:0, nextSequence:1,
       events:[], applied:new Map()
@@ -136,12 +137,18 @@ export class ServerObjectiveRoundsService {
     const player=round.players.find(p=>p.playerId===playerId);
     if (!player || !round.objectives.includes(objectiveId))
       return rejected("invalid_participant_or_objective");
+    // Ownership is server-owned. Changing only the request ID must NEVER
+    // farm points by repeatedly reporting the same team at one objective.
+    if(round.objectiveOwners[objectiveId]===player.teamId)
+      return rejected("objective_already_controlled");
+    round.objectiveOwners[objectiveId]=player.teamId;
     // Points are issued only by an already trusted server's event adapter.
     // Movement, trigger proof and collision still need real server physics.
     round.scores[player.teamId]=Math.min(round.maxPoints,round.scores[player.teamId]+points);
     round.applied.set(requestId,{fingerprint});
     this.#append(round,"objective-captured",{
-      playerId,teamId:player.teamId,objectiveId,points
+      playerId,teamId:player.teamId,objectiveId,points,
+      controllingTeamId:player.teamId
     });
     if (round.scores[player.teamId]>=round.maxPoints)
       this.#finalize(round,"completed",player.teamId);
@@ -195,7 +202,11 @@ export class ServerObjectiveRoundsService {
     return clone({
       roundId:round.roundId,matchId:round.matchId,serverId:round.serverId,
       mapId:round.mapId,phase:round.phase,
-      scores:round.scores,revision:round.revision,
+      scores:round.scores,
+      objectiveOwners:round.objectiveOwners,
+      controlledObjectives:Object.entries(round.objectiveOwners)
+        .map(([objectiveId,teamId])=>({objectiveId,teamId:teamId||""})),
+      revision:round.revision,
       nextSequence:round.nextSequence,createdAtMs:round.createdAtMs,
       startedAtMs:round.startedAtMs,endedAtMs:round.endedAtMs,
       winningTeamId:round.winningTeamId,

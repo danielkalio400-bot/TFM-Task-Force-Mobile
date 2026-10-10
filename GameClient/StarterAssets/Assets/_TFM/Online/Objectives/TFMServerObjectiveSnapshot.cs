@@ -10,6 +10,13 @@ namespace TFM.Online.Objectives
         public int bravo;
     }
 
+    [Serializable]
+    public sealed class TFMObjectiveControlRecord
+    {
+        public string objectiveId = string.Empty;
+        public string teamId = string.Empty;
+    }
+
     // Read-only deserialization; a local scene cannot claim server authority.
     [Serializable]
     public sealed class TFMServerObjectiveSnapshot
@@ -22,6 +29,9 @@ namespace TFM.Online.Objectives
         public string serverId = string.Empty;
         public string winningTeamId = string.Empty;
         public TFMServerObjectiveScores scores = new TFMServerObjectiveScores();
+        // Flat array is Unity JsonUtility-compatible (not a Dictionary).
+        public TFMObjectiveControlRecord[] controlledObjectives =
+            Array.Empty<TFMObjectiveControlRecord>();
         public bool persistentResult;
         public bool grantsProgression;
 
