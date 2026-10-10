@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "provider": "BazID",
+  "systems": [
+    "stable-game-identifier",
+    "external-subject-reference",
+    "display-profile",
+    "profile-audit-history",
+    "profile-disable-state",
+    "deletion-request-link"
+  ],
+  "storageRule": "TFM stores its own player identifier and a stable external subject reference only. It must never store BazID passwords, signing credentials or privileged BazID tokens in player profiles.",
+  "productionBoundary": "The starter uses in-memory profile state. Production requires encrypted durable persistence, authenticated service access, subject-reference protection and retention/deletion policy enforcement."
+}

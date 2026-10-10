@@ -103,6 +103,9 @@ import { handleMatchmakingAuthority } from "./routes/matchmaking-authority.mjs";
 import { matchmakingAuthorityRuntime } from "./matchmaking-authority-contracts.mjs";
 import { FairMatchmakingPolicyService } from "./services/fair-matchmaking-policy.mjs";
 import { MatchmakingAuthorityService } from "./services/matchmaking-authority.mjs";
+import { handleProfileAuthority } from "./routes/profile-authority.mjs";
+import { playerProfileAuthorityRuntime } from "./profile-authority-contracts.mjs";
+import { PlayerProfileAuthorityService } from "./services/player-profile-authority.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -188,6 +191,7 @@ export function makeServer() {
     policy: fairMatchmakingPolicy,
     contract: matchmakingAuthorityRuntime,
   });
+  const playerProfileAuthority = new PlayerProfileAuthorityService();
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -292,6 +296,7 @@ export function makeServer() {
         authoritativeMatchArchive: "local-validated-proof-prototype",
         replayTelemetryArchive: "local-sequenced-metadata-prototype",
         matchmakingAuthority: "local-time-bounded-fair-policy-prototype",
+        playerProfileAuthority: "local-stable-id-subject-reference-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -412,6 +417,10 @@ export function makeServer() {
       matchmaking: matchmakingAuthority,
       policy: fairMatchmakingPolicy,
       contract: matchmakingAuthorityRuntime,
+    })) return;
+    if (await handleProfileAuthority(request, response, path, {
+      profiles: playerProfileAuthority,
+      contract: playerProfileAuthorityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
