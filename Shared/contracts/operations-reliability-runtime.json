@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "systems": [
+    "service-health-probes",
+    "availability-targets",
+    "incident-log-audit",
+    "deployment-revisions",
+    "deployment-rollback",
+    "crash-diagnostics",
+    "regional-routing-state",
+    "load-test-summaries",
+    "predictable-degradation-gates",
+    "privacy-minimized-operations-logs"
+  ],
+  "defaultAvailabilityTargets": {
+    "matchmaking": 0.995,
+    "game-servers": 0.995,
+    "progression": 0.999
+  },
+  "loadGate": {
+    "maximumErrorRate01": 0.02,
+    "maximumP95LatencyMs": 250
+  },
+  "rule": "Operations must expose health, incident, rollback, telemetry and availability state without placing private player data in operational logs.",
+  "productionBoundary": "This starter records local operations metadata only. Real deployment orchestration, infrastructure rollback, crash-symbol processing, observability backends and SLO enforcement require production infrastructure."
+}

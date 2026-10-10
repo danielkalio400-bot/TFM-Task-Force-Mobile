@@ -109,6 +109,9 @@ import { PlayerProfileAuthorityService } from "./services/player-profile-authori
 import { handleInventoryAuthority } from "./routes/inventory-authority.mjs";
 import { inventoryAuthorityRuntime } from "./inventory-authority-contracts.mjs";
 import { InventoryAuthorityService } from "./services/inventory-authority.mjs";
+import { handleOperationsReliability } from "./routes/operations-reliability.mjs";
+import { operationsReliabilityRuntime } from "./operations-reliability-contracts.mjs";
+import { OperationsReliabilityService } from "./services/operations-reliability.mjs";
 
 const modeCatalog = JSON.parse(
   readFileSync(new URL("../../Shared/contracts/mode-catalog.json", import.meta.url), "utf8"),
@@ -196,6 +199,12 @@ export function makeServer() {
   });
   const playerProfileAuthority = new PlayerProfileAuthorityService();
   const inventoryAuthority = new InventoryAuthorityService({ ledger: inventory, contract: inventoryAuthorityRuntime });
+  const operationsReliability = new OperationsReliabilityService({
+    health: operationsHealth,
+    incidents,
+    liveOperations,
+    contract: operationsReliabilityRuntime,
+  });
   const socialSafetyPolicy = new SocialSafetyPolicyService({
     sanctions: moderationSanctions,
     consent: consentSettings,
@@ -302,6 +311,7 @@ export function makeServer() {
         matchmakingAuthority: "local-time-bounded-fair-policy-prototype",
         playerProfileAuthority: "local-stable-id-subject-reference-prototype",
         inventoryAuthorityV2: "local-server-owned-transaction-prototype",
+        operationsReliability: "local-health-rollback-load-gate-prototype",
         committedPlatforms: platformTargets.committedTargets.map(item => item.id),
       });
     }
@@ -431,6 +441,10 @@ export function makeServer() {
       authority: inventoryAuthority,
       sessions,
       contract: inventoryAuthorityRuntime,
+    })) return;
+    if (await handleOperationsReliability(request, response, path, {
+      reliability: operationsReliability,
+      contract: operationsReliabilityRuntime,
     })) return;
 
     return sendJson(response, 404, { error: "not_found" });
