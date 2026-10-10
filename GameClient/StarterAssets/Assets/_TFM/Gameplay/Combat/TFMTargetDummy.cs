@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 namespace TFM.Gameplay.Combat
@@ -16,14 +17,26 @@ namespace TFM.Gameplay.Combat
         private Coroutine _flashRoutine;
         private int _health;
         private bool _alive;
+        private bool _usesImportedTarget;
 
         public int Health => _health;
         public bool IsAlive => _alive;
 
         private void Awake()
         {
-            _renderers = GetComponentsInChildren<Renderer>();
-            _colliders = GetComponentsInChildren<Collider>();
+            // The editor's production-art installer disables primitive Body/Head
+            // components without deleting their scene/gameplay anchors.
+            // Capture only originally active hit surfaces: restoring all children
+            // would resurrect hidden blockout meshes after the first respawn.
+            _renderers = GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer != null && renderer.enabled &&
+                    renderer.gameObject.activeInHierarchy)
+                .ToArray();
+            _colliders = GetComponentsInChildren<Collider>(true)
+                .Where(collider => collider != null && collider.enabled &&
+                    collider.gameObject.activeInHierarchy && !collider.isTrigger)
+                .ToArray();
+            _usesImportedTarget = transform.Find("TFM Production Practice Target") != null;
             _propertyBlock = new MaterialPropertyBlock();
             ResetTarget();
         }
@@ -89,21 +102,26 @@ namespace TFM.Gameplay.Combat
         {
             foreach (Renderer targetRenderer in _renderers)
             {
-                targetRenderer.enabled = visible;
+                if (targetRenderer != null) targetRenderer.enabled = visible;
             }
             foreach (Collider targetCollider in _colliders)
             {
-                targetCollider.enabled = visible;
+                if (targetCollider != null) targetCollider.enabled = visible;
             }
         }
 
         private void ApplyColor(Color color)
         {
+            // Realistic imported prefabs own their PBR material/texture properties.
+            // Use the weapon HUD hit marker for these assets, not an override that
+            // recolors imported materials on hit or respawn.
+            if (_usesImportedTarget) return;
             _propertyBlock.SetColor("_BaseColor", color);
             _propertyBlock.SetColor("_Color", color);
             foreach (Renderer targetRenderer in _renderers)
             {
-                targetRenderer.SetPropertyBlock(_propertyBlock);
+                if (targetRenderer != null)
+                    targetRenderer.SetPropertyBlock(_propertyBlock);
             }
         }
     }
