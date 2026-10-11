@@ -7,6 +7,7 @@ using TFM.UI.HUD;
 using TFM.Performance;
 using TFM.Gameplay.Training;
 using TFM.Gameplay.Practice;
+using TFM.World;
 using UnityEngine;
 
 namespace TFM.Gameplay.Prototype
@@ -37,6 +38,10 @@ namespace TFM.Gameplay.Prototype
                     gameObject.AddComponent<TFMAdaptiveFramePacer>();
                 if (GetComponent<TFMPerformancePanel>() == null)
                     gameObject.AddComponent<TFMPerformancePanel>();
+
+                // A production district scene uses character patrols and a full map,
+                // not the Training Yard's target drills, waypoint cones or timers.
+                if (GetComponent<TFMWorldIdentity>() != null) return;
 
                 // Existing saved yards are extended at runtime in place.
                 // Nothing regenerates or overwrites locally edited Unity scenes.

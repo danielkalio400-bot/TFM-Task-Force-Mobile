@@ -1,5 +1,6 @@
 using TFM.Gameplay.Combat;
 using TFM.Player.Controls;
+using TFM.World;
 using UnityEngine;
 
 namespace TFM.UI.HUD
@@ -13,6 +14,12 @@ namespace TFM.UI.HUD
         private GUIStyle _zoneStyle;
         private GUIStyle _crosshairStyle;
         private GUIStyle _ammoStyle;
+        private bool _productionWorld;
+
+        private void Awake()
+        {
+            _productionWorld = GetComponent<TFMWorldIdentity>() != null;
+        }
 
         public void Configure(TFMPlayerInput input, TFMHitscanWeapon weapon)
         {
@@ -29,7 +36,7 @@ namespace TFM.UI.HUD
             float headerWidth=Mathf.Min(390f,Mathf.Max(165f,area.width*0.58f));
             GUI.Box(new Rect(area.xMin+8f,area.yMin+8f,headerWidth,96f), GUIContent.none);
             GUI.Label(new Rect(area.xMin+18f,area.yMin+17f,
-                headerWidth-28f,28f), "TFM · 3D TRAINING YARD", _titleStyle);
+                headerWidth-28f,28f), _productionWorld ? "TFM · DISTRICT 01" : "TFM · TRAINING YARD", _titleStyle);
 
             string controls = Application.isMobilePlatform
                 ? "Left: move   ·   Right: look   ·   AIM: toggle"

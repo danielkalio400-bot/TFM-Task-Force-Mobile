@@ -28,6 +28,7 @@ Editor/TFMCharacterModelImporter.cs
 Editor/TFMOperatorVisualWorkbench.cs
 Editor/TFMOperatorAnimationPipeline.cs
 Editor/TFMOperatorCombatInstaller.cs
+Editor/TFMDistrictWorldBuilder.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs
@@ -39,6 +40,7 @@ Gameplay/Combat/TFMHealth.cs
 Gameplay/Combat/TFMHitscanWeapon.cs
 Gameplay/Combat/TFMTargetDummy.cs
 Gameplay/Combat/TFMTargetMotion.cs
+Gameplay/Combat/TFMDistrictPatrol.cs
 Gameplay/Combat/TFMWeaponDefinition.cs
 Gameplay/Combat/TFMWeaponRuntimeState.cs
 Gameplay/Extraction/TFMExtractionContract.cs
@@ -276,3 +278,4 @@ UI/Controls/TFMTouchLayoutState.cs
 UI/HUD/TFMPrototypeHud.cs
 UI/Navigation/TFMScreenId.cs
 UI/Navigation/TFMUiNavigationState.cs
+World/TFMWorldIdentity.cs
