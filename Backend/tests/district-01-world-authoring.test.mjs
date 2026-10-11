@@ -58,3 +58,9 @@ test("district world runtime disables only the legacy training drill setup, not 
  assert.match(hud,/TFM · DISTRICT 01/);
  assert.match(hud,/TFMWorldIdentity/);
 });
+
+test("one-command production world generation runs real Unity batch authoring",()=>{
+ assert.match(editor,/public static void BuildDistrictBatch\(\)/);
+ assert.match(editor,/TFM_DISTRICT_BUILD_RESULT=SUCCESS/);
+ assert.match(editor,/TFM_DISTRICT_BUILD_RESULT=FAILED/);
+});

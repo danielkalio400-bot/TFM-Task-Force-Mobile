@@ -123,6 +123,27 @@ namespace TFM.Editor
                 "lighting and optimized tiling URP surfaces. Existing Training Yard was not changed.");
         }
 
+        // Windows PowerShell / Unity Hub command-line world construction.
+        // Creates a real saved .unity scene and original material assets.
+        public static void BuildDistrictBatch()
+        {
+            try
+            {
+                CreateDistrict();
+                if (AssetDatabase.LoadAssetAtPath<SceneAsset>(DistrictScene) == null)
+                    throw new InvalidOperationException(
+                        "TFM District 01 world file was not created.");
+                Debug.Log("TFM_DISTRICT_BUILD_RESULT=SUCCESS " + DistrictScene);
+                EditorApplication.Exit(0);
+            }
+            catch (Exception error)
+            {
+                Debug.LogException(error);
+                Debug.LogError("TFM_DISTRICT_BUILD_RESULT=FAILED");
+                EditorApplication.Exit(1);
+            }
+        }
+
         [MenuItem("TFM/Worlds/Open District 01")]
         public static void OpenDistrict()
         {
