@@ -74,6 +74,25 @@ Write-Host "Scene: $scene"
 Write-Host "Original URP textures/materials: $(Join-Path $ProjectPath 'Assets\_TFM\Worlds\District01')"
 Write-Host 'Your imported character and animation files remain in the original Unity project.'
 
+# Additive city systems author into the EXISTING saved District 01 without
+# replacing the uploaded Humanoid, PBR materials, or developer scene edits.
+Write-Host '[4/4] Expanding District 01 traffic, street life and daylight...'
+$lifeLog = Join-Path $env:TEMP 'TFM-District01-StreetLife.log'
+$lifeArgs = @(
+    '-batchmode', '-quit',
+    '-projectPath', ('"' + $ProjectPath + '"'),
+    '-executeMethod', 'TFM.Editor.TFMDistrictLifeBuilder.ExpandBatch',
+    '-logFile', ('"' + $lifeLog + '"')
+)
+if (Test-Path -LiteralPath $lifeLog) { Remove-Item -LiteralPath $lifeLog }
+$lifeBuild = Start-Process -FilePath $UnityEditorPath -ArgumentList $lifeArgs -PassThru -Wait
+if ($lifeBuild.ExitCode -ne 0 -or
+    -not (Select-String -LiteralPath $lifeLog -SimpleMatch 'TFM_DISTRICT_LIFE_RESULT=SUCCESS')) {
+    if (Test-Path -LiteralPath $lifeLog) { Get-Content -LiteralPath $lifeLog -Tail 70 }
+    throw ('TFM District 01 Street Life expansion failed; Unity exit ' + $lifeBuild.ExitCode)
+}
+Write-Host 'TFM DISTRICT 01 STREET LIFE SAVED IN UNITY'
+
 # District 01 exists independently of optional external CC0 surface sources.
 # Photo API downtime is not allowed to destroy the saved game world.
 try {

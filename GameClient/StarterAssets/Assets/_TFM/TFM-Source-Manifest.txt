@@ -30,6 +30,7 @@ Editor/TFMOperatorAnimationPipeline.cs
 Editor/TFMOperatorCombatInstaller.cs
 Editor/TFMDistrictWorldBuilder.cs
 Editor/TFMDistrictPbrImporter.cs
+Editor/TFMDistrictLifeBuilder.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs
@@ -280,3 +281,6 @@ UI/HUD/TFMPrototypeHud.cs
 UI/Navigation/TFMScreenId.cs
 UI/Navigation/TFMUiNavigationState.cs
 World/TFMWorldIdentity.cs
+World/District01/TFMDistrictTrafficSignal.cs
+World/District01/TFMDistrictStreetVehicle.cs
+World/District01/TFMDistrictDaylight.cs
