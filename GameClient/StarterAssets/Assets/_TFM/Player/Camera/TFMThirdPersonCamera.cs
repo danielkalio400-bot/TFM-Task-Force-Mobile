@@ -26,7 +26,7 @@ namespace TFM.Player.Camera
         private float _yaw;
         private float _pitch = 5f;
         private bool _snapNextFrame = true;
-        private Camera _camera;
+        private UnityEngine.Camera _camera;
         private float _baseFieldOfView = 65f;
         private float _aimBlend;
         private TFMHitscanWeapon _weapon;
@@ -43,7 +43,7 @@ namespace TFM.Player.Camera
 
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
+            _camera = GetComponent<UnityEngine.Camera>();
             if (_camera != null) _baseFieldOfView = _camera.fieldOfView;
         }
 
@@ -76,7 +76,7 @@ namespace TFM.Player.Camera
             float targetBlend = _input != null && _input.AimHeld ? 1f : 0f;
             _aimBlend = Mathf.MoveTowards(_aimBlend, targetBlend,
                 Time.deltaTime * aimTransitionSpeed);
-            if (_camera == null) _camera = GetComponent<Camera>();
+            if (_camera == null) _camera = GetComponent<UnityEngine.Camera>();
             if (_camera != null)
                 _camera.fieldOfView = Mathf.Lerp(_baseFieldOfView, aimFieldOfView, _aimBlend);
 
