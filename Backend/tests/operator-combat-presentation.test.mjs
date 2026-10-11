@@ -18,6 +18,7 @@ test("ADS controls cover PC, gamepad and touch action separation",()=>{
  assert.match(controls,/mouse\.rightButton\.isPressed/);
  assert.match(controls,/gamepad\.leftTrigger\.ReadValue\(\)/);
  assert.match(controls,/Input\.GetMouseButton\(1\)/);
+ assert.match(controls,/private void ReadLegacyInput\([\s\S]*?ref bool reload,\s*ref bool aim\)/);
  assert.match(layout,/public static Rect Aim\(/);
  assert.match(layout,/Expanded\(Aim\(safe,screenHeight\),margin\)/);
  assert.match(hud,/TFMMobileControlLayout\.Aim/);

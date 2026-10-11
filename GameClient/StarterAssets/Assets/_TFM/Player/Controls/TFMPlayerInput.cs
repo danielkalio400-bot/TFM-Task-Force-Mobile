@@ -259,7 +259,8 @@ namespace TFM.Player.Controls
             ref bool jump,
             ref bool sprint,
             ref bool fire,
-            ref bool reload)
+            ref bool reload,
+            ref bool aim)
         {
             move = Vector2.ClampMagnitude(
                 new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
