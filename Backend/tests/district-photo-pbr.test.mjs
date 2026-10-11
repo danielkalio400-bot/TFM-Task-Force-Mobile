@@ -30,3 +30,11 @@ test("PBR Windows PowerShell 5.1 serialization uses strongly-typed array, not ge
  assert.doesNotMatch(downloader,/@\(\$ledger\)/);
  assert.match(downloader,/Reusing downloaded photographed PBR maps/);
 });
+
+test("PBR guard uses canonical material and texture provenance instead of Unity-renamed asset name",()=>{
+ assert.match(editor,/AssetDatabase\.GetAssetPath\(material\) != materialPath/);
+ assert.match(editor,/material\.shader\.name != "Universal Render Pipeline\/Lit"/);
+ assert.match(editor,/currentAlbedoPath != originalAlbedoPath/);
+ assert.match(editor,/currentAlbedoPath != diffusePath/);
+ assert.doesNotMatch(editor,/material\.name\.StartsWith/);
+});

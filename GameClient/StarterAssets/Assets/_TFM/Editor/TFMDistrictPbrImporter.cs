@@ -45,12 +45,32 @@ namespace TFM.Editor
                     continue;
                 }
 
-                Material material = AssetDatabase.LoadAssetAtPath<Material>(
-                    Root + "/Materials/TFM-" + key + ".mat");
-                if (material == null || !material.name.StartsWith(
-                    "TFM Original ", StringComparison.Ordinal))
+                // AssetDatabase.CreateAsset can name the material after the
+                // asset filename (TFM-road), even when its constructor name is
+                // "TFM Original road". Do not use material.name as provenance.
+                string materialPath = Root + "/Materials/TFM-" + key + ".mat";
+                Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                if (material == null)
                     throw new InvalidOperationException(
-                        "Surface " + key + " is not an original TFM material.");
+                        "TFM generated surface material not found: " + materialPath);
+                if (AssetDatabase.GetAssetPath(material) != materialPath ||
+                    material.shader == null ||
+                    material.shader.name != "Universal Render Pipeline/Lit")
+                    throw new InvalidOperationException(
+                        "Refusing to edit a non-URP or non-TFM asset at " + materialPath);
+
+                // Confirm the current albedo points either to the exact
+                // originally generated map or to this PBR pass's diffuse file.
+                // This avoids changing artist-replaced materials in-place.
+                Texture currentAlbedo = material.GetTexture("_BaseMap");
+                string currentAlbedoPath = AssetDatabase.GetAssetPath(currentAlbedo);
+                string originalAlbedoPath = Root + "/Textures/TFM-" + key + ".png";
+                if (currentAlbedoPath != originalAlbedoPath &&
+                    currentAlbedoPath != diffusePath)
+                    throw new InvalidOperationException(
+                        "TFM " + key + " material has a custom albedo at " +
+                        currentAlbedoPath + "; preserving it. Expected " +
+                        originalAlbedoPath + " or " + diffusePath);
 
                 TextureImporter normalImporter =
                     AssetImporter.GetAtPath(normalPath) as TextureImporter;

@@ -127,7 +127,7 @@ foreach ($surface in $queries.Keys) {
 if ($ledger.Count -eq 0) {
     throw 'No CC0 photo material downloaded. The original authored district remains unchanged.'
 }
-# Windows PowerShell 5.1 cannot reliably array-wrap List[object] with @($ledger).
+# Windows PowerShell 5.1 may fail when wrapping generic lists in array expressions.
 # Serialize the concrete object array to avoid 'Argument types do not match'.
 $provenance = $ledger.ToArray()
 ConvertTo-Json -InputObject $provenance -Depth 5 | Set-Content -LiteralPath (
