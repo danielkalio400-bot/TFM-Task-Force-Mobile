@@ -109,12 +109,16 @@ namespace TFM.Editor
             signal.Configure(vertical.ToArray(), horizontal.ToArray());
 
             // Lane centre lines correspond to authored street geometry.
+            // The southern side of the cross street is clear of the original
+            // building footprint at z >= 22. Vehicle width is ~2 metres.
             CreateVehicle(street, "Eastbound Service Van", signal,
-                new Vector3(-49f, 0f, 21.5f), new Vector3(49f, 0f, 21.5f),
+                new Vector3(-49f, 0f, 20.5f), new Vector3(49f, 0f, 20.5f),
                 false, 4.4f, palette, 0);
-            CreateVehicle(street, "Westbound Compact Car", signal,
-                new Vector3(49f, 0f, 26.5f), new Vector3(-49f, 0f, 26.5f),
-                false, 4.1f, palette, 1);
+            // A third N/S unit avoids routing cars through the i=4
+            // industrial buildings intersecting the north crossing lane.
+            CreateVehicle(street, "Northbound Courier Car", signal,
+                new Vector3(-3.2f, 0f, -33f), new Vector3(-3.2f, 0f, 49f),
+                true, 3.5f, palette, 1);
             CreateVehicle(street, "Northbound Logistics Van", signal,
                 new Vector3(-3.2f, 0f, -49f), new Vector3(-3.2f, 0f, 49f),
                 true, 3.9f, palette, 2);

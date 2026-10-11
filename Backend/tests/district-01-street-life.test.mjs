@@ -24,7 +24,7 @@ test("Bulk 63 real Unity scene expansion is additive and idempotent",()=>{
  assert.match(script,/TFM_DISTRICT_LIFE_RESULT=SUCCESS/);
 });
 test("traffic vehicles obey crossroads and react to physical obstacles",()=>{
- assert.match(source,/new Vector3\(-49f, 0f, 21\.5f\)/);
+ assert.match(source,/new Vector3\(-49f, 0f, 20\.5f\)/);
  assert.match(source,/new Vector3\(-3\.2f, 0f, -49f\)/);
  assert.match(vehicle,/Physics\.RaycastNonAlloc/);
  assert.match(vehicle,/redAhead \|\| blocked/);
@@ -42,4 +42,10 @@ test("environment cycles sun and avoids expensive per-lamp shadow lights",()=>{
  assert.match(source,/Street Trees and Planters/);
  assert.match(source,/22 roadside trees/);
  assert.doesNotMatch(source,/new Material\((?!shader)/);
+});
+
+test("cross-street actors avoid original north-side industrial facade collisions",()=>{
+ assert.match(source,/new Vector3\(-49f, 0f, 20\.5f\)/);
+ assert.doesNotMatch(source,/new Vector3\(49f, 0f, 26\.5f\)/);
+ assert.match(source,/Northbound Courier Car/);
 });
