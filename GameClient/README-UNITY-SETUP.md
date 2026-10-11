@@ -104,3 +104,7 @@ separate milestones.
 ## Realistic art replacement (Bulk 53)
 
 Import original/licensed URP prefabs, create a **TFM Production Art Profile** via Assets > Create, assign operator, environment and physical practice target prefabs, then open the saved Training Yard and use **TFM > Production Art > Apply Imported Prefabs**. The installer retains the existing gameplay systems, disables prototype visual objects, uses Undo and leaves the scene unsaved for review. See `Documentation/61-BULK-53-REALISTIC-ASSET-INTEGRATION.md` for colliders, rigging and verification. Code changes alone do not provide realistic meshes.
+
+## Import optimized uploaded humanoid FBX
+
+The project supports user-supplied realistic 3D character models. Import the optimized `TFM_Character_2K.fbx` into `Assets/_TFM/Art/Characters`, select it in the Project panel, then use **TFM > Production Art > Configure and Assign Selected Character FBX**. Unity validates the Humanoid Avatar and assigns the imported model to the single Production Art Profile; it does not fabricate textures/animations or override existing operator choices. Configure URP materials and an actual Animator Controller; environment and practice-target prefabs must also be assigned before the scene art installer can run. Source-controlled C# intentionally does not include the large user-provided FBX.

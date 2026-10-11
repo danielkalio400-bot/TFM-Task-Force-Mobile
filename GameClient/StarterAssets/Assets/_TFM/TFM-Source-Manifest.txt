@@ -24,6 +24,7 @@ Core/Services/TFMServiceRegistry.cs
 Editor/TFMPlayableDemoBatchBuild.cs
 Editor/TFMTrainingSceneBuilder.cs
 Editor/TFMProductionArtInstaller.cs
+Editor/TFMCharacterModelImporter.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs
