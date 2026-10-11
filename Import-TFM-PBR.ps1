@@ -41,6 +41,37 @@ $headers = @{ 'User-Agent' = 'TFM-OriginalDistrict/1.0' }
 $photoRoot = Join-Path $ProjectPath 'Assets\_TFM\Worlds\District01\PhotoPBR'
 $ledger = New-Object 'System.Collections.Generic.List[object]'
 foreach ($surface in $queries.Keys) {
+    # All three maps already on disk? Use them without repeating API requests.
+    $dest = Join-Path $photoRoot $surface
+    $localMaps = @('Diffuse', 'Normal', 'Rough')
+    $alreadyComplete = $true
+    foreach ($mapName in $localMaps) {
+        $existingFile = Join-Path $dest ('{0}_{1}.jpg' -f $surface, $mapName)
+        if (-not (Test-Path -LiteralPath $existingFile) -or
+            (Get-Item -LiteralPath $existingFile).Length -lt 1024) {
+            $alreadyComplete = $false
+        }
+    }
+    if ($alreadyComplete) {
+        Write-Host ('Reusing downloaded photographed PBR maps for ' + $surface)
+        # Preserve provider provenance recorded on previous successful installs.
+        # The first failed run may lack JSON, so the verified source asset ids
+        # correspond to the exact four assets previously downloaded by TFM.
+        $knownAsset = @{
+            road = 'asphalt_03'
+            brick = 'brick_wall_10'
+            concrete = 'concrete_wall_008'
+            metal = 'corrugated_iron'
+        }[$surface]
+        $ledger.Add([pscustomobject]@{
+            surface=$surface
+            asset=$knownAsset
+            license='CC0'
+            provider='Powered by Poly Haven'
+            source=('https://polyhaven.com/a/' + $knownAsset)
+        })
+        continue
+    }
     $q = [uri]::EscapeDataString($queries[$surface])
     $url = 'https://api.polyhaven.com/search?q=' + $q + '&t=textures&limit=12'
     Write-Host ('Searching CC0 photographed ' + $surface + ' surfaces...')
@@ -96,7 +127,10 @@ foreach ($surface in $queries.Keys) {
 if ($ledger.Count -eq 0) {
     throw 'No CC0 photo material downloaded. The original authored district remains unchanged.'
 }
-@($ledger) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (
+# Windows PowerShell 5.1 cannot reliably array-wrap List[object] with @($ledger).
+# Serialize the concrete object array to avoid 'Argument types do not match'.
+$provenance = $ledger.ToArray()
+ConvertTo-Json -InputObject $provenance -Depth 5 | Set-Content -LiteralPath (
     Join-Path $photoRoot 'PolyHaven-Provenance.json') -Encoding UTF8
 
 $log = Join-Path $env:TEMP 'TFM-District-Photo-PBR.log'

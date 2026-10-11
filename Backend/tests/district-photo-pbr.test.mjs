@@ -23,3 +23,10 @@ test("real photo URLs come only from CC0 provider metadata and preserve credit",
  assert.match(downloader,/license='CC0'/);
  assert.match(world,/Import-TFM-PBR\.ps1/);
 });
+
+test("PBR Windows PowerShell 5.1 serialization uses strongly-typed array, not generic collection array literal",()=>{
+ assert.match(downloader,/\$provenance = \$ledger\.ToArray\(\)/);
+ assert.match(downloader,/ConvertTo-Json -InputObject \$provenance/);
+ assert.doesNotMatch(downloader,/@\(\$ledger\)/);
+ assert.match(downloader,/Reusing downloaded photographed PBR maps/);
+});
