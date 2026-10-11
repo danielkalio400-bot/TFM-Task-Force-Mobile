@@ -25,6 +25,7 @@ Editor/TFMPlayableDemoBatchBuild.cs
 Editor/TFMTrainingSceneBuilder.cs
 Editor/TFMProductionArtInstaller.cs
 Editor/TFMCharacterModelImporter.cs
+Editor/TFMOperatorVisualWorkbench.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs
@@ -260,6 +261,7 @@ Player/State/TFMPlayerLifeState.cs
 Player/State/TFMPlayerSessionState.cs
 Presentation/TFMProductionArtProfile.cs
 Presentation/TFMOperatorMotionBridge.cs
+Presentation/TFMOperatorEnergyAura.cs
 Profile/TFMPlayerProfileRecord.cs
 Profile/TFMProfileAuditEntry.cs
 Profile/TFMProfileLifecycleState.cs
