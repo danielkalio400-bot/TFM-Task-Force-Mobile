@@ -1,20 +1,28 @@
+using TFM.Gameplay.Combat;
+using TFM.Player.Controls;
 using UnityEngine;
 
 namespace TFM.Presentation
 {
-    // Bridges the physical player movement to imported authored animations.
-    // Only pre-existing Animator parameters are written. No animations are synthesized.
+    /// <summary>
+    /// Drives authored humanoid clips from the existing authoritative movement
+    /// and offline practice weapon. Does not create or fake animation data.
+    /// </summary>
     public sealed class TFMOperatorMotionBridge : MonoBehaviour
     {
         [SerializeField] private Transform motionSource;
-        [SerializeField, Min(0.1f)] private float runSpeedMetersPerSecond = 6f;
+        [SerializeField, Min(0.1f)] private float runSpeedMetersPerSecond = 7.5f;
         private Animator[] _animators;
-        private bool[] _hasSpeed, _hasMoving, _hasGrounded;
+        private bool[] _hasSpeed, _hasMoving, _hasGrounded, _hasFiring, _hasReloading;
         private CharacterController _motorCollider;
+        private TFMPlayerInput _input;
+        private TFMHitscanWeapon _practiceWeapon;
         private Vector3 _lastPosition;
         private static readonly int SpeedId = Animator.StringToHash("Speed");
         private static readonly int MovingId = Animator.StringToHash("IsMoving");
         private static readonly int GroundedId = Animator.StringToHash("Grounded");
+        private static readonly int FiringId = Animator.StringToHash("IsFiring");
+        private static readonly int ReloadingId = Animator.StringToHash("IsReloading");
 
         public void Configure(Transform actor)
         {
@@ -28,16 +36,24 @@ namespace TFM.Presentation
             _hasSpeed = new bool[_animators.Length];
             _hasMoving = new bool[_animators.Length];
             _hasGrounded = new bool[_animators.Length];
+            _hasFiring = new bool[_animators.Length];
+            _hasReloading = new bool[_animators.Length];
+            if (motionSource == null)
+            {
+                var controller = GetComponentInParent<CharacterController>();
+                if (controller != null) motionSource = controller.transform;
+            }
             _motorCollider = motionSource != null
                 ? motionSource.GetComponent<CharacterController>() : null;
+            _input = motionSource != null ? motionSource.GetComponent<TFMPlayerInput>() : null;
+            _practiceWeapon = motionSource != null
+                ? motionSource.GetComponent<TFMHitscanWeapon>() : null;
             _lastPosition = motionSource != null ? motionSource.position : transform.position;
             for (int index = 0; index < _animators.Length; index++)
             {
                 Animator animator = _animators[index];
                 if (animator == null) continue;
-                // CharacterController owns movement; authored clips provide visuals.
-                // Applying imported root motion would drift the visual away from
-                // the authoritative player position and compromise hit alignment.
+                // The CharacterController, not imported root motion, owns position.
                 animator.applyRootMotion = false;
                 foreach (AnimatorControllerParameter parameter in animator.parameters)
                 {
@@ -50,20 +66,29 @@ namespace TFM.Presentation
                     if (parameter.nameHash == GroundedId &&
                         parameter.type == AnimatorControllerParameterType.Bool)
                         _hasGrounded[index] = true;
+                    if (parameter.nameHash == FiringId &&
+                        parameter.type == AnimatorControllerParameterType.Bool)
+                        _hasFiring[index] = true;
+                    if (parameter.nameHash == ReloadingId &&
+                        parameter.type == AnimatorControllerParameterType.Bool)
+                        _hasReloading[index] = true;
                 }
             }
         }
 
         private void Update()
         {
-            if (motionSource == null) return;
+            if (motionSource == null || _animators == null) return;
             Vector3 position = motionSource.position;
             Vector3 planar = position - _lastPosition;
             planar.y = 0f;
             _lastPosition = position;
-            if (Time.deltaTime <= 0f || _animators == null) return;
+            if (Time.deltaTime <= 0f) return;
             float speed = Mathf.Clamp01(planar.magnitude / Time.deltaTime / runSpeedMetersPerSecond);
             bool grounded = _motorCollider == null || _motorCollider.isGrounded;
+            bool reloading = _practiceWeapon != null && _practiceWeapon.IsReloading;
+            bool firing = !reloading && _input != null && _input.FireHeld &&
+                (_practiceWeapon == null || _practiceWeapon.CurrentAmmo > 0);
             for (int i = 0; i < _animators.Length; i++)
             {
                 Animator animator = _animators[i];
@@ -71,6 +96,8 @@ namespace TFM.Presentation
                 if (_hasSpeed[i]) animator.SetFloat(SpeedId, speed);
                 if (_hasMoving[i]) animator.SetBool(MovingId, speed > 0.025f);
                 if (_hasGrounded[i]) animator.SetBool(GroundedId, grounded);
+                if (_hasFiring[i]) animator.SetBool(FiringId, firing);
+                if (_hasReloading[i]) animator.SetBool(ReloadingId, reloading);
             }
         }
     }
