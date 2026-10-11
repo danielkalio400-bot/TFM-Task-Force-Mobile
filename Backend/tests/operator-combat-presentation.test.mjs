@@ -1,0 +1,60 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const base=new URL("../../GameClient/StarterAssets/Assets/_TFM/",import.meta.url);
+const read=p=>readFileSync(new URL(p,base),"utf8");
+const controls=read("Player/Controls/TFMPlayerInput.cs");
+const layout=read("Player/Controls/TFMMobileControlLayout.cs");
+const camera=read("Player/Camera/TFMThirdPersonCamera.cs");
+const weapon=read("Gameplay/Combat/TFMHitscanWeapon.cs");
+const hud=read("UI/HUD/TFMPrototypeHud.cs");
+const bridge=read("Presentation/TFMOperatorMotionBridge.cs");
+const editor=read("Editor/TFMOperatorCombatInstaller.cs");
+const manifest=read("TFM-Source-Manifest.txt");
+
+test("ADS controls cover PC, gamepad and touch action separation",()=>{
+ assert.match(controls,/public bool AimHeld/);
+ assert.match(controls,/public void QueueAimToggle/);
+ assert.match(controls,/mouse\.rightButton\.isPressed/);
+ assert.match(controls,/gamepad\.leftTrigger\.ReadValue\(\)/);
+ assert.match(controls,/Input\.GetMouseButton\(1\)/);
+ assert.match(layout,/public static Rect Aim\(/);
+ assert.match(layout,/Expanded\(Aim\(safe,screenHeight\),margin\)/);
+ assert.match(hud,/TFMMobileControlLayout\.Aim/);
+ assert.match(hud,/QueueAimToggle/);
+});
+test("camera aiming feedback is purely visual and respects occlusion checks",()=>{
+ assert.match(camera,/aimFieldOfView/);
+ assert.match(camera,/Mathf\.MoveTowards\(_aimBlend, targetBlend/);
+ assert.match(camera,/Mathf\.Lerp\(_baseFieldOfView, aimFieldOfView/);
+ assert.match(camera,/Mathf\.Lerp\(distance, aimDistance, _aimBlend\)/);
+ assert.match(camera,/Physics\.SphereCast/);
+ assert.match(camera,/ShotFired \+= OnShotFired/);
+ assert.match(camera,/ShotFired -= OnShotFired/);
+});
+test("weapon reports accepted practice shots and reload UI progress without changing scoring",()=>{
+ assert.match(weapon,/public event Action ShotFired/);
+ assert.match(weapon,/ShotFired\?\.Invoke\(\)/);
+ assert.match(weapon,/public bool RecentShot/);
+ assert.match(weapon,/public float ReloadProgress/);
+ assert.match(weapon,/TrainingShotResolved\?\.Invoke/);
+ assert.match(hud,/ReloadProgress/);
+ assert.match(bridge,/RecentShot/);
+ assert.match(bridge,/IsAiming/);
+ assert.match(bridge,/GetBoneTransform\(HumanBodyBones\.UpperChest\)/);
+ assert.doesNotMatch(bridge,/TakeDamage|Physics\.Raycast/);
+});
+test("optional upper body animation mask preserves imported FBX, locomotion and Unity scene",()=>{
+ assert.equal(manifest.split(/\r?\n/).filter(x=>x==="Editor/TFMOperatorCombatInstaller.cs").length,1);
+ assert.match(editor,/MenuItem\("TFM\/Operator\/Combat\/Auto-Integrate Combat Presentation"\)/);
+ assert.match(editor,/TFMTrainingSceneBuilder\.ScenePath/);
+ assert.match(editor,/AvatarMaskBodyPart\.Root, false/);
+ assert.match(editor,/AvatarMaskBodyPart\.LeftLeg, false/);
+ assert.match(editor,/AvatarMaskBodyPart\.Body, true/);
+ assert.match(editor,/AvatarMaskBodyPart\.RightArm, true/);
+ assert.match(editor,/AnimatorLayerBlendingMode\.Override/);
+ assert.match(editor,/FirstOrDefault\(l => l\.name == LayerName\)/);
+ assert.match(editor,/clip\.humanMotion/);
+ assert.match(editor,/EditorSceneManager\.MarkSceneDirty\(scene\)/);
+ assert.doesNotMatch(editor,/AssetDatabase\.DeleteAsset|SaveScene\(|PrefabUtility\.Unpack|ModelImporter/);
+});

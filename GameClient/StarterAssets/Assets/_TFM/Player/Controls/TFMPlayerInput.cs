@@ -19,6 +19,8 @@ namespace TFM.Player.Controls
         private bool _jumpQueued;
         private bool _fireQueued;
         private bool _reloadQueued;
+        private bool _aimToggleQueued;
+        private bool _aimToggled;
         private TFMGyroAimBridge _gyro;
 #if ENABLE_INPUT_SYSTEM
         private bool _enabledEnhancedTouch;
@@ -30,6 +32,7 @@ namespace TFM.Player.Controls
         public bool SprintHeld { get; private set; }
         public bool FireHeld { get; private set; }
         public bool ReloadPressed { get; private set; }
+        public bool AimHeld { get; private set; }
         public TFMInputDeviceKind ActiveDevice { get; private set; } = TFMInputDeviceKind.Unknown;
 
         private void Awake()
@@ -66,15 +69,18 @@ namespace TFM.Player.Controls
             _leftFinger=-1;
             _rightFinger=-1;
             _leftStart=Vector2.zero;
-            _jumpQueued=_fireQueued=_reloadQueued=false;
+            _jumpQueued=_fireQueued=_reloadQueued=_aimToggleQueued=false;
+            _aimToggled=false;
             Move=Look=Vector2.zero;
-            JumpPressed=SprintHeld=FireHeld=ReloadPressed=false;
+            JumpPressed=SprintHeld=FireHeld=ReloadPressed=AimHeld=false;
             ActiveDevice=TFMInputDeviceKind.Unknown;
         }
 
         public void QueueJump() => _jumpQueued = true;
         public void QueueFire() => _fireQueued = true;
         public void QueueReload() => _reloadQueued = true;
+        // Touch HUD switches between hip view and aim view. PC uses hold right mouse.
+        public void QueueAimToggle() => _aimToggleQueued = true;
 
         private void Update()
         {
@@ -84,11 +90,12 @@ namespace TFM.Player.Controls
             bool sprint = false;
             bool fire = false;
             bool reload = false;
+            bool aim = false;
 
 #if ENABLE_INPUT_SYSTEM
-            ReadInputSystem(ref move, ref look, ref jump, ref sprint, ref fire, ref reload);
+            ReadInputSystem(ref move, ref look, ref jump, ref sprint, ref fire, ref reload, ref aim);
 #elif ENABLE_LEGACY_INPUT_MANAGER
-            ReadLegacyInput(ref move, ref look, ref jump, ref sprint, ref fire, ref reload);
+            ReadLegacyInput(ref move, ref look, ref jump, ref sprint, ref fire, ref reload, ref aim);
 #endif
 
             if (_gyro != null && _gyro.IsAvailable && _gyro.LookDelta.sqrMagnitude > 0.000001f)
@@ -105,9 +112,12 @@ namespace TFM.Player.Controls
             SprintHeld = sprint;
             FireHeld = fire || _fireQueued;
             ReloadPressed = reload || _reloadQueued;
+            if (_aimToggleQueued) _aimToggled = !_aimToggled;
+            AimHeld = aim || _aimToggled;
             _jumpQueued = false;
             _fireQueued = false;
             _reloadQueued = false;
+            _aimToggleQueued = false;
         }
 
 #if ENABLE_INPUT_SYSTEM
@@ -117,7 +127,8 @@ namespace TFM.Player.Controls
             ref bool jump,
             ref bool sprint,
             ref bool fire,
-            ref bool reload)
+            ref bool reload,
+            ref bool aim)
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null)
@@ -151,6 +162,7 @@ namespace TFM.Player.Controls
             {
                 if (mouse.rightButton.isPressed)
                 {
+                    aim = true;
                     look = mouse.delta.ReadValue();
                     ActiveDevice = TFMInputDeviceKind.KeyboardMouse;
                 }
@@ -171,6 +183,7 @@ namespace TFM.Player.Controls
                                padLook.sqrMagnitude > 0.0025f ||
                                gamepad.buttonSouth.wasPressedThisFrame ||
                                gamepad.rightTrigger.ReadValue() > 0.2f ||
+                               gamepad.leftTrigger.ReadValue() > 0.2f ||
                                gamepad.buttonWest.wasPressedThisFrame;
 
                 if (padUsed)
@@ -180,6 +193,7 @@ namespace TFM.Player.Controls
                     jump |= gamepad.buttonSouth.wasPressedThisFrame;
                     sprint |= gamepad.leftStickButton.isPressed;
                     fire |= gamepad.rightTrigger.ReadValue() > 0.5f;
+                    aim |= gamepad.leftTrigger.ReadValue() > 0.5f;
                     reload |= gamepad.buttonWest.wasPressedThisFrame;
                     ActiveDevice = TFMInputDeviceKind.Controller;
                 }
@@ -252,6 +266,7 @@ namespace TFM.Player.Controls
             jump = Input.GetButtonDown("Jump");
             sprint = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             fire = !Application.isMobilePlatform && Input.GetMouseButton(0);
+            aim = !Application.isMobilePlatform && Input.GetMouseButton(1);
             reload = Input.GetKeyDown(KeyCode.R);
 
             if (move.sqrMagnitude > 0f || jump || sprint || fire || reload)

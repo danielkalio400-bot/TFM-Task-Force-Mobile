@@ -27,6 +27,7 @@ Editor/TFMProductionArtInstaller.cs
 Editor/TFMCharacterModelImporter.cs
 Editor/TFMOperatorVisualWorkbench.cs
 Editor/TFMOperatorAnimationPipeline.cs
+Editor/TFMOperatorCombatInstaller.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs

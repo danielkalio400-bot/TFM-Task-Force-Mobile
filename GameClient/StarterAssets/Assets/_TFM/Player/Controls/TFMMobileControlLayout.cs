@@ -42,6 +42,14 @@ namespace TFM.Player.Controls
             return new Rect(rect.xMax-245f*s,rect.yMax-225f*s,96f*s,54f*s);
         }
 
+        public static Rect Aim(Rect safe, float screenHeight)
+        {
+            Rect rect=GuiSafeArea(safe,screenHeight);
+            float s=Scale(safe);
+            // Separate from right-hand fire, jump, reload and look regions.
+            return new Rect(rect.xMax-355f*s,rect.yMax-285f*s,94f*s,58f*s);
+        }
+
         public static Rect MoveZone(Rect safe,float screenHeight)
         {
             Rect rect=GuiSafeArea(safe,screenHeight);
@@ -65,7 +73,8 @@ namespace TFM.Player.Controls
             float margin=9f*Scale(safe);
             return Expanded(Fire(safe,screenHeight),margin).Contains(topLeft) ||
                 Expanded(Jump(safe,screenHeight),margin).Contains(topLeft) ||
-                Expanded(Reload(safe,screenHeight),margin).Contains(topLeft);
+                Expanded(Reload(safe,screenHeight),margin).Contains(topLeft) ||
+                Expanded(Aim(safe,screenHeight),margin).Contains(topLeft);
         }
 
         private static Rect Expanded(Rect r,float margin)

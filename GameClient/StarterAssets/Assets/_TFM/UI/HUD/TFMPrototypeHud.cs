@@ -32,8 +32,8 @@ namespace TFM.UI.HUD
                 headerWidth-28f,28f), "TFM · 3D TRAINING YARD", _titleStyle);
 
             string controls = Application.isMobilePlatform
-                ? "Left: move   ·   Right: look   ·   FIRE: shoot"
-                : "WASD: move · Shift: sprint · Space: jump\nRight mouse: look · Left mouse: fire · R: reload";
+                ? "Left: move   ·   Right: look   ·   AIM: toggle"
+                : "WASD: move · Shift: sprint · Space: jump\nRight mouse: aim/look · Left mouse: fire · R: reload";
             GUI.Label(new Rect(area.xMin+18f,area.yMin+44f,
                 headerWidth-28f,52f), controls, _bodyStyle);
 
@@ -72,11 +72,19 @@ namespace TFM.UI.HUD
             {
                 _input.QueueReload();
             }
+            if (GUI.Button(
+                    TFMMobileControlLayout.Aim(safe,Screen.height),
+                    _input.AimHeld ? "AIM ON" : "AIM"))
+            {
+                _input.QueueAimToggle();
+            }
         }
 
         private void DrawCrosshairAndAmmo()
         {
             string reticle = _weapon != null && _weapon.HitMarkerVisible ? "×" : "+";
+            // Smaller crosshair signals precision view without copying any external HUD.
+            _crosshairStyle.fontSize = _input != null && _input.AimHeld ? 22 : 30;
             GUI.Label(
                 new Rect(Screen.width * 0.5f - 20f, Screen.height * 0.5f - 24f, 40f, 48f),
                 reticle,
@@ -88,7 +96,7 @@ namespace TFM.UI.HUD
             }
 
             string ammo = _weapon.IsReloading
-                ? "RELOADING"
+                ? "RELOADING " + Mathf.RoundToInt(_weapon.ReloadProgress * 100f) + "%"
                 : $"{_weapon.CurrentAmmo:00} / {_weapon.ReserveAmmo:000}";
             Rect safe=TFMMobileControlLayout.GuiSafeArea(
                 Screen.safeArea,Screen.height);

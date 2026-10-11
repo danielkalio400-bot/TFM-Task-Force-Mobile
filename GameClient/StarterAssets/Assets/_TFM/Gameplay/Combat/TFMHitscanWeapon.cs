@@ -21,13 +21,19 @@ namespace TFM.Gameplay.Combat
         private float _nextShotTime;
         private float _reloadCompleteTime;
         private float _hitMarkerUntil;
+        private float _lastShotTime = -100f;
 
         public event Action<TFMTrainingShotResult> TrainingShotResolved;
+        // Presentation-only notification from a real accepted practice shot.
+        public event Action ShotFired;
 
         public int CurrentAmmo { get; private set; }
         public int ReserveAmmo { get; private set; }
         public bool IsReloading { get; private set; }
         public bool HitMarkerVisible => Time.time < _hitMarkerUntil;
+        public bool RecentShot => Time.time - _lastShotTime < 0.12f;
+        public float ReloadProgress => !IsReloading ? 0f :
+            Mathf.Clamp01(1f - (_reloadCompleteTime - Time.time) / reloadDuration);
 
         public void Configure(TFMPlayerInput input, Camera aimCamera)
         {
@@ -81,6 +87,7 @@ namespace TFM.Gameplay.Combat
             IsReloading = false;
             _nextShotTime = 0f;
             _hitMarkerUntil = 0f;
+            _lastShotTime = -100f;
         }
 
         public void StartReload()
@@ -113,6 +120,8 @@ namespace TFM.Gameplay.Combat
 
             CurrentAmmo--;
             _nextShotTime = Time.time + 1f / shotsPerSecond;
+            _lastShotTime = Time.time;
+            ShotFired?.Invoke();
 
             TFMTargetDummy practiceTarget = null;
             bool practiceHit = false;

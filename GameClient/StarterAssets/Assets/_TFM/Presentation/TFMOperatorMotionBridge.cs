@@ -23,6 +23,11 @@ namespace TFM.Presentation
         private static readonly int GroundedId = Animator.StringToHash("Grounded");
         private static readonly int FiringId = Animator.StringToHash("IsFiring");
         private static readonly int ReloadingId = Animator.StringToHash("IsReloading");
+        private static readonly int AimingId = Animator.StringToHash("IsAiming");
+        private bool[] _hasAiming;
+        private Transform _upperChest;
+        private bool _authoredCombatLayer;
+        private float _recoilPose;
 
         public void Configure(Transform actor)
         {
@@ -38,6 +43,7 @@ namespace TFM.Presentation
             _hasGrounded = new bool[_animators.Length];
             _hasFiring = new bool[_animators.Length];
             _hasReloading = new bool[_animators.Length];
+            _hasAiming = new bool[_animators.Length];
             if (motionSource == null)
             {
                 var controller = GetComponentInParent<CharacterController>();
@@ -72,6 +78,20 @@ namespace TFM.Presentation
                     if (parameter.nameHash == ReloadingId &&
                         parameter.type == AnimatorControllerParameterType.Bool)
                         _hasReloading[index] = true;
+                    if (parameter.nameHash == AimingId &&
+                        parameter.type == AnimatorControllerParameterType.Bool)
+                        _hasAiming[index] = true;
+                }
+            }
+            // Low-intensity procedural fallback: preserves all authored locomotion.
+            foreach (Animator animator in _animators)
+            {
+                if (animator == null || animator.avatar == null || !animator.avatar.isHuman) continue;
+                _authoredCombatLayer |= animator.GetLayerIndex("TFM Combat Upper") >= 0;
+                if (_upperChest == null)
+                {
+                    _upperChest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
+                    if (_upperChest == null) _upperChest = animator.GetBoneTransform(HumanBodyBones.Chest);
                 }
             }
         }
@@ -87,8 +107,10 @@ namespace TFM.Presentation
             float speed = Mathf.Clamp01(planar.magnitude / Time.deltaTime / runSpeedMetersPerSecond);
             bool grounded = _motorCollider == null || _motorCollider.isGrounded;
             bool reloading = _practiceWeapon != null && _practiceWeapon.IsReloading;
-            bool firing = !reloading && _input != null && _input.FireHeld &&
-                (_practiceWeapon == null || _practiceWeapon.CurrentAmmo > 0);
+            bool firing = !reloading && (_practiceWeapon != null
+                ? _practiceWeapon.RecentShot
+                : _input != null && _input.FireHeld);
+            bool aiming = _input != null && _input.AimHeld;
             for (int i = 0; i < _animators.Length; i++)
             {
                 Animator animator = _animators[i];
@@ -98,7 +120,22 @@ namespace TFM.Presentation
                 if (_hasGrounded[i]) animator.SetBool(GroundedId, grounded);
                 if (_hasFiring[i]) animator.SetBool(FiringId, firing);
                 if (_hasReloading[i]) animator.SetBool(ReloadingId, reloading);
+                if (_hasAiming[i]) animator.SetBool(AimingId, aiming);
             }
+        }
+
+        private void LateUpdate()
+        {
+            // A minimal, original pose accent until licensed upper-body clips
+            // are supplied. No synthetic full reload animation is claimed.
+            if (_upperChest == null || _authoredCombatLayer) return;
+            float target = _practiceWeapon != null && _practiceWeapon.RecentShot ? 3.5f :
+                (_practiceWeapon != null && _practiceWeapon.IsReloading ? -1.3f :
+                (_input != null && _input.AimHeld ? 1.3f : 0f));
+            _recoilPose = Mathf.Lerp(_recoilPose, target,
+                1f - Mathf.Exp(-14f * Time.deltaTime));
+            _upperChest.localRotation = _upperChest.localRotation *
+                Quaternion.Euler(_recoilPose, 0f, 0f);
         }
     }
 }
