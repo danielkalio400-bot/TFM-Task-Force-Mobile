@@ -29,6 +29,7 @@ Editor/TFMOperatorVisualWorkbench.cs
 Editor/TFMOperatorAnimationPipeline.cs
 Editor/TFMOperatorCombatInstaller.cs
 Editor/TFMDistrictWorldBuilder.cs
+Editor/TFMDistrictPbrImporter.cs
 FairPlay/TFMFairPlaySignal.cs
 FairPlay/TFMFairPlaySignalType.cs
 Gameplay/BattleRoyale/TFMBattleRoyaleRuntimeState.cs

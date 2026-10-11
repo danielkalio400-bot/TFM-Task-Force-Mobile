@@ -73,3 +73,14 @@ Write-Host 'TFM DISTRICT 01 CREATED IN UNITY'
 Write-Host "Scene: $scene"
 Write-Host "Original URP textures/materials: $(Join-Path $ProjectPath 'Assets\_TFM\Worlds\District01')"
 Write-Host 'Your imported character and animation files remain in the original Unity project.'
+
+# District 01 exists independently of optional external CC0 surface sources.
+# Photo API downtime is not allowed to destroy the saved game world.
+try {
+    $photoScript = Join-Path $env:TEMP 'TFM-Photo-PBR-Installer.ps1'
+    Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/danielkalio400-bot/TFM-Task-Force-Mobile/main/Import-TFM-PBR.ps1' -OutFile $photoScript -TimeoutSec 90
+    & $photoScript -Root $Root -ProjectPath $ProjectPath -UnityEditorPath $UnityEditorPath
+}
+catch {
+    Write-Warning ('District 01 is saved; optional CC0 photo pass deferred: ' + $_.Exception.Message)
+}
